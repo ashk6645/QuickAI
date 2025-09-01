@@ -8,100 +8,136 @@ axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
 
 const GenerateImages = () => {
   const imageStyle = [
-        'Realistic', 'Cartoon', 'Ghibli style',  'Anime Style', 'Cartoon style', 'Fantasy style', '3D Style', 'Portrait Style'
-      ]
+    'Realistic', 'Cartoon', 'Ghibli style', 'Anime Style', 'Cartoon style', 'Fantasy style', '3D Style', 'Portrait Style'
+  ]
 
-      const [selectedStyle, setSelectedStyle] = useState('Realistic')
-      const [input, setInput] = useState('')
-      const [publish, setPublish] = useState(false)
-      const [loading, setLoading] = useState(false)
-      const [content, setContent] = useState('')
+  const [selectedStyle, setSelectedStyle] = useState('Realistic')
+  const [input, setInput] = useState('')
+  const [publish, setPublish] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [content, setContent] = useState('')
 
-    const {getToken} = useAuth()
+  const { getToken } = useAuth()
 
-      const onSubmitHandler = async (e) => {
-        e.preventDefault();
-        try {
-          setLoading(true)
-          const prompt = `Generate an image of ${input} in the style of ${selectedStyle}`
-          const {data} = await axios.post('/api/ai/generate-image', {
-            prompt, publish
-          }, {
-            headers: {
-              Authorization: `Bearer ${await getToken()}`
-            }
-          })
-
-          if(data.success){
-            setContent(data.content)
-          }else{
-            toast.error(data.message)
-          }
-        } catch (error) {
-          toast.error(error.message)
+  const onSubmitHandler = async (e) => {
+    e.preventDefault();
+    try {
+      setLoading(true)
+      const prompt = `Generate an image of ${input} in the style of ${selectedStyle}`
+      const { data } = await axios.post('/api/ai/generate-image', {
+        prompt, publish
+      }, {
+        headers: {
+          Authorization: `Bearer ${await getToken()}`
         }
-        setLoading(false)
+      })
+
+      if (data.success) {
+        setContent(data.content)
+      } else {
+        toast.error(data.message)
       }
+    } catch (error) {
+      toast.error(error.message)
+    }
+    setLoading(false)
+  }
 
   return (
-    <div className='h-full overflow-y-scroll p-6 flex items-start flex-wrap gap-4 text-slate-700'>
-      {/* left col */}
-      <form onSubmit={onSubmitHandler} className='w-full max-w-lg p-4 bg-white rounded-lg border border-gray-200'>
-        <div className='flex items-center gap-3'>
-          <Sparkles className='w-6 text-[#00AD25]'/>
-          <h1 className='text-xl font-semibold'>AI Image Generator</h1>
-        </div>
-        <p className='mt-6 text-sm font-semibold'>Describe your Image</p>
-
-        <textarea onChange={(e)=>setInput(e.target.value)} value={input} rows={4} className='w-full p-2 px-3 mt-2 outline-none text-sm rounded-md border border-gray-300' placeholder='Describe what you want to see in the image...' required />
-        <p className='mt-4 text-sm font-semibold'>Style</p>
-
-        <div className='mt-3 flex gap-3 flex-wrap sm:max-w-9/11'>
-          {imageStyle.map((item)=>(
-            <span onClick={()=> setSelectedStyle(item)} className={`text-xs px-4 py-1 border rounded-full cursor-pointer ${selectedStyle === item ? 'bg-green-50 text-green-700' : 'text-gray-500 border-gray-300'}`} key={item}>{item}</span>
-          ) )}
-        </div>
-
-        <div className='my-6 flex items-center gap-2'>
-          <label className='relative cursor-pointer'>
-            <input type="checkbox" onChange={(e)=>setPublish(e.target.checked)} checked={publish} className='sr-only peer'/>
-
-            <div className='w-9 h-5 bg-slate-300 rounded-full peer-checked:bg-green-500 transition'>
+    <div className='p-6'>
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+        {/* Input Card */}
+        <div className='bg-white p-6 rounded-xl border border-gray-100 shadow-sm'>
+          <div className='flex items-center gap-3 mb-6'>
+            <div className='w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-teal-500 flex items-center justify-center'>
+              <Sparkles className='w-5 h-5 text-white' />
             </div>
-            <span className='absolute left-1 top-1 w-3 h-3 bg-white rounded-full transition peer-checked:translate-x-4'></span>
-          </label>
-          <p className='text-sm'>Make this image public</p>
-
+            <h1 className='text-xl font-semibold text-gray-900'>AI Image Generator</h1>
+          </div>
+          
+          <form onSubmit={onSubmitHandler} className='space-y-5'>
+            <div>
+              <label className='block text-sm font-medium text-gray-700 mb-2'>Describe your Image</label>
+              <textarea 
+                onChange={(e) => setInput(e.target.value)} 
+                value={input} 
+                rows={4} 
+                className='w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition' 
+                placeholder='Describe what you want to see in the image...' 
+                required 
+              />
+            </div>
+            
+            <div>
+              <label className='block text-sm font-medium text-gray-700 mb-2'>Style</label>
+              <div className='flex flex-wrap gap-2'>
+                {imageStyle.map((item) => (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedStyle(item)}
+                    className={`px-3 py-1.5 text-sm rounded-full border transition ${selectedStyle === item 
+                      ? 'bg-green-100 text-green-700 border-green-200' 
+                      : 'text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+                    key={item}
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <div className='flex items-center gap-3'>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  onChange={(e) => setPublish(e.target.checked)} 
+                  checked={publish} 
+                  className="sr-only peer" 
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+              </label>
+              <span className='text-sm text-gray-700'>Make this image public</span>
+            </div>
+            
+            <button 
+              disabled={loading} 
+              className='w-full flex justify-center items-center gap-2 bg-gradient-to-r from-green-600 to-teal-600 text-white px-4 py-3 rounded-lg font-medium hover:from-green-700 hover:to-teal-700 transition disabled:opacity-70'
+            >
+              {loading ? (
+                <span className='w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin'></span>
+              ) : (
+                <>
+                  <Image className='w-5 h-5' />
+                  Generate Image
+                </>
+              )}
+            </button>
+          </form>
         </div>
 
-        <button disabled={loading} className='w-full flex justify-center items-center gap-2 bg-gradient-to-r from-[#00AD25] to-[#04FF50] text-white px-4 py-2 mt-6 text-sm rounded-lg cursor-pointer'>
-          {loading ? <span className='w-4 h-4 my-1 rounded-full border-2 border-t-transparent animate-spin'></span> : <Image className='w-5' />}
-          Generate Image
-        </button>
-      </form>
-
-      {/* right col */}
-      <div className='w-full max-w-lg p-4 bg-white rounded-lg flex flex-col border border-gray-200 min-h-96'>
-        <div className='flex items-center gap-3'>
-          <Image className='w-5 h-5 text-[#00AD25]'/>
-          <h1 className='text-xl font-semibold'>Generated Images</h1>
+        {/* Output Card */}
+        <div className='bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col'>
+          <div className='flex items-center gap-3 mb-6'>
+            <div className='w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center'>
+              <Image className='w-5 h-5 text-gray-600' />
+            </div>
+            <h1 className='text-xl font-semibold text-gray-900'>Generated Images</h1>
+          </div>
+          
+          {!content ? (
+            <div className='flex-1 flex flex-col justify-center items-center text-center py-10'>
+              <div className='w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4'>
+                <Image className='w-8 h-8 text-gray-400' />
+              </div>
+              <p className='text-gray-500 max-w-xs'>Enter a description and click "Generate Image" to get started</p>
+            </div>
+          ) : (
+            <div className='flex-1 flex items-center justify-center'>
+              <img src={content} alt="Generated content" className='max-h-96 rounded-lg object-contain' />
+            </div>
+          )}
         </div>
-        {
-          !content ? (<div className='flex-1 flex justify-center items-center'>
-          <div className='text-sm flex flex-col items-center gap-5 text-gray-400'>
-            <Image className='w-9 h-9'/>
-            <p>Enter a topic and click "Generate Image" to get started</p>
-          </div>
-
-        </div>) : (
-          <div className='mt-3 h-full'>
-            <img src={content} alt="image"  className='w-full h-full'/>
-          </div>
-        )
-        }
-        
       </div>
-      
     </div>
   )
 }

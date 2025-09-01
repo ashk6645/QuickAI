@@ -5,100 +5,128 @@ import toast from 'react-hot-toast'
 import Markdown from 'react-markdown'
 import axios from 'axios'
 
-
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
 
 const BlogTitles = () => {
+  const blogCategories = [
+    'General', 'Technology', 'Health', 'Lifestyle', 'Travel', 'Food', 'Education', 'Business'
+  ]
 
-    const blogCategories = [
-      'General', 'Technology', 'Health', 'Lifestyle', 'Travel', 'Food', 'Education', 'Business'
-    ]
+  const [selectedCategory, setSelectedCategory] = useState('General')
+  const [input, setInput] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [content, setContent] = useState('')
 
-    const [selectedCategory, setSelectedCategory] = useState('General')
-    const [input, setInput] = useState('')
-    const [loading, setLoading] = useState(false)
-    const [content, setContent] = useState('')
+  const { getToken } = useAuth()
 
-    const {getToken} = useAuth()
-
-    const onSubmitHandler = async (e) => {
-      e.preventDefault();
-      try {
-        setLoading(true)
-        const prompt = `Generate a catchy blog title about ${input} in the category of ${selectedCategory}`
-        const {data} = await axios.post('/api/ai/generate-blog-title', {
-          prompt
-        }, {
-          headers: {
-            Authorization: `Bearer ${await getToken()}`
-          }
-        })
-
-        if(data.success){
-          setContent(data.content)
-        }else{
-          toast.error(data.message)
+  const onSubmitHandler = async (e) => {
+    e.preventDefault();
+    try {
+      setLoading(true)
+      const prompt = `Generate a catchy blog title about ${input} in the category of ${selectedCategory}`
+      const { data } = await axios.post('/api/ai/generate-blog-title', {
+        prompt
+      }, {
+        headers: {
+          Authorization: `Bearer ${await getToken()}`
         }
-      } catch (error) {
-        toast.error(error.message)
+      })
+
+      if (data.success) {
+        setContent(data.content)
+      } else {
+        toast.error(data.message)
       }
-      setLoading(false)
+    } catch (error) {
+      toast.error(error.message)
     }
+    setLoading(false)
+  }
 
   return (
-    <div className='h-full overflow-y-scroll p-6 flex items-start flex-wrap gap-4 text-slate-700'>
-      {/* left col */}
-      <form onSubmit={onSubmitHandler} className='w-full max-w-lg p-4 bg-white rounded-lg border border-gray-200'>
-        <div className='flex items-center gap-3'>
-          <Sparkles className='w-6 text-[#8E37EB]'/>
-          <h1 className='text-xl font-semibold'>AI Title Generator</h1>
-        </div>
-        <p className='mt-6 text-sm font-semibold'>Keyword</p>
-
-        <input onChange={(e)=>setInput(e.target.value)} value={input} type="text" className='w-full p-2 px-3 mt-2 outline-none text-sm rounded-md border border-gray-300' placeholder='The Future of artificial intelligence is...' required />
-        <p className='mt-4 text-sm font-semibold'>Category</p>
-
-        <div className='mt-3 flex gap-3 flex-wrap sm:max-w-9/11'>
-          {blogCategories.map((item)=>(
-            <span onClick={()=> setSelectedCategory(item)} className={`text-xs px-4 py-1 border rounded-full cursor-pointer ${selectedCategory === item ? 'bg-purple-50 text-purple-700' : 'text-gray-500 border-gray-300'}`} key={item}>{item}</span>
-          ) )}
-        </div>
-        <br />
-        <button disabled={loading} className='w-full flex justify-center items-center gap-2 bg-gradient-to-r from-[#C341F6] to-[#8E37EB] text-white px-4 py-2 mt-6 text-sm rounded-lg cursor-pointer'>
-          {loading ? <span className='w-4 h-4 my-1 rounded-full border-2 border-t-transparent animate-spin'></span> : <Hash className='w-5' />}
-          Generate Title
-        </button>
-      </form>
-
-      {/* right col */}
-      <div className='w-full max-w-lg p-4 bg-white rounded-lg flex flex-col border border-gray-200 min-h-96'>
-        <div className='flex items-center gap-3'>
-          <Hash className='w-5 h-5 text-[#8E37EB]'/>
-          <h1 className='text-xl font-semibold'>Generated Titles</h1>
-        </div>
-        {
-          !content ? (<div className='flex-1 flex justify-center items-center'>
-          <div className='text-sm flex flex-col items-center gap-5 text-gray-400'>
-            <Hash className='w-9 h-9'/>
-            <p>Enter a topic and click "Generated title" to get started</p>
+    <div className='p-6'>
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+        {/* Input Card */}
+        <div className='bg-white p-6 rounded-xl border border-gray-100 shadow-sm'>
+          <div className='flex items-center gap-3 mb-6'>
+            <div className='w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center'>
+              <Sparkles className='w-5 h-5 text-white' />
+            </div>
+            <h1 className='text-xl font-semibold text-gray-900'>AI Title Generator</h1>
           </div>
+          
+          <form onSubmit={onSubmitHandler} className='space-y-5'>
+            <div>
+              <label className='block text-sm font-medium text-gray-700 mb-2'>Keyword</label>
+              <input 
+                onChange={(e) => setInput(e.target.value)} 
+                value={input} 
+                type="text" 
+                className='w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition' 
+                placeholder='The Future of artificial intelligence is...' 
+                required 
+              />
+            </div>
+            
+            <div>
+              <label className='block text-sm font-medium text-gray-700 mb-2'>Category</label>
+              <div className='flex flex-wrap gap-2'>
+                {blogCategories.map((item) => (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCategory(item)}
+                    className={`px-3 py-1.5 text-sm rounded-full border transition ${selectedCategory === item 
+                      ? 'bg-purple-100 text-purple-700 border-purple-200' 
+                      : 'text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+                    key={item}
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <button 
+              disabled={loading} 
+              className='w-full flex justify-center items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-3 rounded-lg font-medium hover:from-purple-700 hover:to-pink-700 transition disabled:opacity-70'
+            >
+              {loading ? (
+                <span className='w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin'></span>
+              ) : (
+                <>
+                  <Hash className='w-5 h-5' />
+                  Generate Title
+                </>
+              )}
+            </button>
+          </form>
+        </div>
 
-        </div>) : (
-          <div className='mt-3 h-full overflow-y-scroll text-sm text-slate-600'>
-                      <div className='reset-tw'>
-                        <Markdown>
-                           {content}
-                        </Markdown>
-                       
-                      </div>
-                    </div>
-        )
-        }
-        
+        {/* Output Card */}
+        <div className='bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col'>
+          <div className='flex items-center gap-3 mb-6'>
+            <div className='w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center'>
+              <Hash className='w-5 h-5 text-gray-600' />
+            </div>
+            <h1 className='text-xl font-semibold text-gray-900'>Generated Titles</h1>
+          </div>
+          
+          {!content ? (
+            <div className='flex-1 flex flex-col justify-center items-center text-center py-10'>
+              <div className='w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4'>
+                <Hash className='w-8 h-8 text-gray-400' />
+              </div>
+              <p className='text-gray-500 max-w-xs'>Enter a topic and click "Generate title" to get started</p>
+            </div>
+          ) : (
+            <div className='prose prose-sm max-w-none text-gray-700 flex-1 overflow-auto'>
+              <Markdown>{content}</Markdown>
+            </div>
+          )}
+        </div>
       </div>
-      
     </div>
   )
 }
 
-export default BlogTitles;
+export default BlogTitles

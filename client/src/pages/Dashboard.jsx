@@ -1,86 +1,87 @@
-  import React, { useEffect, useState } from 'react'
-  import { Gem, Sparkle, Sparkles } from 'lucide-react'
-  import { Protect, useAuth } from '@clerk/clerk-react'
-  import CreationItem from '../components/CreationItem'
-  import axios from 'axios'
-  import toast from 'react-hot-toast'
+import React, { useEffect, useState } from 'react'
+import { Gem, Sparkles } from 'lucide-react'
+import { Protect, useAuth } from '@clerk/clerk-react'
+import CreationItem from '../components/CreationItem'
+import axios from 'axios'
+import toast from 'react-hot-toast'
 
-  axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
+axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
 
-  const Dashboard = () => {
-    const [creations, setCreations] = useState([]); 
-    const [loading, setLoading] = useState(true);
-    const {getToken} = useAuth()
+const Dashboard = () => {
+  const [creations, setCreations] = useState([]); 
+  const [loading, setLoading] = useState(true);
+  const { getToken } = useAuth()
 
-    const getDashboardData = async () => {
-      try {
-        const {data} = await axios.get('/api/user/get-user-creations', {
-          headers : {
-            Authorization: `Bearer ${await getToken()}`}
-        })
-        if (data.success){
-          setCreations(data.creations);
-        }
-        else{
-          toast.error(data.message);
-        }
-      } catch (error) {
-        toast.error(error.message);
+  const getDashboardData = async () => {
+    try {
+      const { data } = await axios.get('/api/user/get-user-creations', {
+        headers: { Authorization: `Bearer ${await getToken()}` }
+      })
+      if (data.success) {
+        setCreations(data.creations);
+      } else {
+        toast.error(data.message);
       }
-      setLoading(false);
+    } catch (error) {
+      toast.error(error.message);
     }
-
-    useEffect(()=>{
-      getDashboardData()
-    },[])
-    return (
-      <div className='h-full overflow-y-scroll p-6'>
-        <div className='flex justify-start gap-4 flex-wrap'>
-
-          {/* Total Creation Card */}
-          <div className='flex justify-between items-center w-72 p-4 px-6 bg-white rounded-xl border border-gray-200'>
-            <div className='text-slate-600'>
-              <p className='text-sm'>Total Creations</p>
-              <h2 className='text-xl font-semibold'>{creations.length}</h2>
-            </div>
-            <div className='w-10 h-10 rounded-lg bg-gradient-to-br from-[#3588F2] to-[#0BB0D7] text-white flex justify-center items-center'>
-              <Sparkles className='w-5 text-white'/>
-            </div>
-          </div>
-
-          {/* Active Plan Card*/}
-          <div className='flex justify-between items-center w-72 p-4 px-6 bg-white rounded-xl border border-gray-200'>
-            <div className='text-slate-600'>
-              <p className='text-sm'>Active Plan</p>
-              <h2 className='text-xl font-semibold'>
-                <Protect plan='premium' fallback="Free">Premium</Protect>
-              </h2>
-            </div>
-            <div className='w-10 h-10 rounded-lg bg-gradient-to-br from-[#FF61C5] to-[#9E53EE] text-white flex justify-center items-center'>
-              <Gem className='w-5 text-white'/>
-            </div>
-          </div>
-
-        </div>
-
-        {
-          loading ? (
-            <div className='flex justify-center items-center h-3/4'>
-              <div className='animate-spin rounded-full h-11 w-11 border-3 border-purple-500 border-t-transparent'></div>
-            </div>
-
-          ) : (
-            <div className='space y-3'>
-          <p className='mt-6 mb-4'>Recent Creation</p>
-          {
-            creations.map((item)=><CreationItem key={item.id} item={item}/>)
-          }
-        </div>
-
-          )
-        }
-
-      </div>
-    )
+    setLoading(false);
   }
-  export default Dashboard
+
+  useEffect(() => {
+    getDashboardData()
+  }, [])
+  
+  return (
+    <div className='p-6'>
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-5 mb-8'>
+        {/* Total Creation Card */}
+        <div className='bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between'>
+          <div>
+            <p className='text-sm text-gray-600 mb-1'>Total Creations</p>
+            <h2 className='text-2xl font-semibold text-gray-900'>{creations.length}</h2>
+          </div>
+          <div className='w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center'>
+            <Sparkles className='w-6 h-6 text-white' />
+          </div>
+        </div>
+
+        {/* Active Plan Card*/}
+        <div className='bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between'>
+          <div>
+            <p className='text-sm text-gray-600 mb-1'>Active Plan</p>
+            <h2 className='text-2xl font-semibold text-gray-900'>
+              <Protect plan='premium' fallback="Free">Premium</Protect>
+            </h2>
+          </div>
+          <div className='w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center'>
+            <Gem className='w-6 h-6 text-white' />
+          </div>
+        </div>
+      </div>
+
+      <div className='bg-white p-5 rounded-xl border border-gray-100 shadow-sm'>
+        <h3 className='text-lg font-medium text-gray-900 mb-4'>Recent Creations</h3>
+        
+        {loading ? (
+          <div className='flex justify-center items-center py-10'>
+            <div className='animate-spin rounded-full h-10 w-10 border-3 border-blue-500 border-t-transparent'></div>
+          </div>
+        ) : (
+          <div className='space-y-4'>
+            {creations.length > 0 ? (
+              creations.map((item) => <CreationItem key={item.id} item={item} />)
+            ) : (
+              <div className='text-center py-10 text-gray-500'>
+                <Sparkles className='w-12 h-12 mx-auto text-gray-300 mb-3' />
+                <p>No creations yet. Start creating with our AI tools!</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+export default Dashboard
