@@ -94,7 +94,13 @@ creations(
 Vercel configs (client & server). Deploy separately or as monorepo. Supply env vars. Use pooled Neon connection.
 
 ## 10. Improvements
-Schema/migrations • Rate limiting • Tests • Structured logging • Accessibility & SEO.
+``
+• Schema/migrations 
+• Rate limiting 
+• Tests 
+• Structured logging 
+• Accessibility & SEO.
+``
 
 ## 11. License (MIT)
 ```
