@@ -146,7 +146,7 @@ const ReviewResume = () => {
               </p>
             </div>
           ) : (
-            <div className="prose prose-sm max-w-none text-gray-700 flex-1 overflow-auto">
+            <div className="prose prose-sm max-w-none text-gray-700 flex-1 max-h-[400px] overflow-auto">
               <style>{`
                 .prose h2, .prose h3, .prose strong {
                   color: #1f2937;

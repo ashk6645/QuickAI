@@ -74,15 +74,19 @@ const Dashboard = () => {
         <h3 className='text-lg font-medium text-gray-900 mb-4'>Recent Creations</h3>
         
         {loading ? (
-          <div className='space-y-4'>
+          <div className='h-[400px] space-y-4'>
             <SkeletonCreationItem />
             <SkeletonCreationItem />
             <SkeletonCreationItem />
           </div>
         ) : (
-          <div className='space-y-4'>
+          <div className='h-[400px] space-y-4'>
             {creations.length > 0 ? (
-              creations.map((item) => <CreationItem key={item.id} item={item} />)
+                <div className="h-[400px] overflow-scroll space-y-4" >
+                  {creations.map((item) => (
+                    <CreationItem key={item.id} item={item} />
+                    ))}
+                </div>
             ) : (
               <div className='text-center py-10 text-gray-500'>
                 <Sparkles className='w-12 h-12 mx-auto text-gray-300 mb-3' />
