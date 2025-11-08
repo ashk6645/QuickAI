@@ -126,7 +126,7 @@ const WriteArticle = () => {
               <p className='text-gray-500 max-w-xs'>Enter a topic and click "Generate Article" to get started</p>
             </div>
           ) : (
-            <div className='prose prose-sm max-w-none text-gray-700 flex-1 overflow-auto'>
+            <div className='prose prose-sm max-w-none text-gray-700 flex-1 max-h-[400px] overflow-auto'>
               <Markdown>{content}</Markdown>
             </div>
           )}
