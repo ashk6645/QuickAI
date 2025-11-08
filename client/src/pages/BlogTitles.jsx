@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import toast from 'react-hot-toast'
 import Markdown from 'react-markdown'
 import axios from 'axios'
+import { ActionButtons } from '../components/ActionButtons';
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
 
@@ -23,7 +24,18 @@ const BlogTitles = () => {
     e.preventDefault();
     try {
       setLoading(true)
-      const prompt = `Generate a catchy blog title about ${input} in the category of ${selectedCategory}`
+      const prompt = `Generate 10 catchy, engaging blog title ideas about "${input}" in the ${selectedCategory} category. 
+
+Format your response as a numbered list (1-10). Each title should be:
+- Attention-grabbing and compelling
+- SEO-friendly
+- Clear and concise
+- Under 60 characters when possible
+
+Example format:
+1. [Title 1]
+2. [Title 2]
+...and so on.`
       const { data } = await axios.post('/api/ai/generate-blog-title', {
         prompt
       }, {
@@ -104,11 +116,14 @@ const BlogTitles = () => {
 
         {/* Output Card */}
         <div className='bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col'>
-          <div className='flex items-center gap-3 mb-6'>
-            <div className='w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center'>
-              <Hash className='w-5 h-5 text-gray-600' />
+          <div className='flex items-center justify-between mb-6'>
+            <div className='flex items-center gap-3'>
+              <div className='w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center'>
+                <Hash className='w-5 h-5 text-gray-600' />
+              </div>
+              <h1 className='text-xl font-semibold text-gray-900'>Generated Titles</h1>
             </div>
-            <h1 className='text-xl font-semibold text-gray-900'>Generated Titles</h1>
+            {content && <ActionButtons content={content} type="text" filename={`blog-titles-${Date.now()}`} />}
           </div>
           
           {!content ? (
@@ -116,7 +131,7 @@ const BlogTitles = () => {
               <div className='w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4'>
                 <Hash className='w-8 h-8 text-gray-400' />
               </div>
-              <p className='text-gray-500 max-w-xs'>Enter a topic and click "Generate title" to get started</p>
+              <p className='text-gray-500 max-w-xs'>Enter a keyword and select a category to generate title ideas</p>
             </div>
           ) : (
             <div className='prose prose-sm max-w-none text-gray-700 flex-1 overflow-auto'>

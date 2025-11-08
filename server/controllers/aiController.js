@@ -79,13 +79,13 @@ export const generateBlogTitle = async (req, res) => {
           content: prompt,
         },
       ],
-      temperature: 0.7,
-      max_tokens: 100,
+      temperature: 0.8,
+      max_tokens: 400,
     });
 
     const content = response.choices[0].message.content;
 
-    await sql`INSERT INTO creations (user_id, prompt, content, type) VALUES (${userId}, ${prompt}, ${content}, 'article')`;
+    await sql`INSERT INTO creations (user_id, prompt, content, type) VALUES (${userId}, ${prompt}, ${content}, 'blog-title')`;
 
     if (plan !== "premium") {
       await clerkClient.users.updateUserMetadata(userId, {
@@ -230,7 +230,37 @@ export const resumeReview = async (req, res) => {
 
    const dataBuffer = fs.readFileSync(resume.path);
    const pdfData = await pdf(dataBuffer);
-   const prompt = `Please review the following resume and provide feedback on its content, strength, structure, and overall effectiveness:\n\n${pdfData.text}`;
+   const prompt = `Analyze the following resume and provide concise, actionable feedback in BULLET POINTS ONLY. Format your response EXACTLY like this:
+
+**STRENGTHS:**
+• [Key strength 1]
+• [Key strength 2]
+• [Key strength 3]
+
+**AREAS FOR IMPROVEMENT:**
+• [Improvement 1]
+• [Improvement 2]
+• [Improvement 3]
+
+**CONTENT QUALITY:**
+• [Content feedback 1]
+• [Content feedback 2]
+
+**STRUCTURE & FORMAT:**
+• [Format feedback 1]
+• [Format feedback 2]
+
+**OVERALL RATING:** [X/10]
+
+**TOP RECOMMENDATIONS:**
+• [Action item 1]
+• [Action item 2]
+• [Action item 3]
+
+Keep each bullet point to 1-2 sentences maximum. Be specific and actionable.
+
+Resume Content:
+${pdfData.text}`;
 
    const response = await AI.chat.completions.create({
       model: "gemini-2.0-flash",
@@ -241,7 +271,7 @@ export const resumeReview = async (req, res) => {
         },
       ],
       temperature: 0.7,
-      max_tokens: 1000,
+      max_tokens: 800,
     });
 
     const content = response.choices[0].message.content;

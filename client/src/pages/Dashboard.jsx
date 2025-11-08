@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Gem, Sparkles } from 'lucide-react'
 import { Protect, useAuth } from '@clerk/clerk-react'
 import CreationItem from '../components/CreationItem'
+import { SkeletonCard, SkeletonCreationItem } from '../components/LoadingComponents'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 
@@ -36,36 +37,47 @@ const Dashboard = () => {
     <div className='p-6'>
       <div className='grid grid-cols-1 md:grid-cols-2 gap-5 mb-8'>
         {/* Total Creation Card */}
-        <div className='bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between'>
-          <div>
-            <p className='text-sm text-gray-600 mb-1'>Total Creations</p>
-            <h2 className='text-2xl font-semibold text-gray-900'>{creations.length}</h2>
-          </div>
-          <div className='w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center'>
-            <Sparkles className='w-6 h-6 text-white' />
-          </div>
-        </div>
+        {loading ? (
+          <>
+            <SkeletonCard />
+            <SkeletonCard />
+          </>
+        ) : (
+          <>
+            <div className='bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between'>
+              <div>
+                <p className='text-sm text-gray-600 mb-1'>Total Creations</p>
+                <h2 className='text-2xl font-semibold text-gray-900'>{creations.length}</h2>
+              </div>
+              <div className='w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center'>
+                <Sparkles className='w-6 h-6 text-white' />
+              </div>
+            </div>
 
-        {/* Active Plan Card*/}
-        <div className='bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between'>
-          <div>
-            <p className='text-sm text-gray-600 mb-1'>Active Plan</p>
-            <h2 className='text-2xl font-semibold text-gray-900'>
-              <Protect plan='premium' fallback="Free">Premium</Protect>
-            </h2>
-          </div>
-          <div className='w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center'>
-            <Gem className='w-6 h-6 text-white' />
-          </div>
-        </div>
+            {/* Active Plan Card*/}
+            <div className='bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between'>
+              <div>
+                <p className='text-sm text-gray-600 mb-1'>Active Plan</p>
+                <h2 className='text-2xl font-semibold text-gray-900'>
+                  <Protect plan='premium' fallback="Free">Premium</Protect>
+                </h2>
+              </div>
+              <div className='w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center'>
+                <Gem className='w-6 h-6 text-white' />
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       <div className='bg-white p-5 rounded-xl border border-gray-100 shadow-sm'>
         <h3 className='text-lg font-medium text-gray-900 mb-4'>Recent Creations</h3>
         
         {loading ? (
-          <div className='flex justify-center items-center py-10'>
-            <div className='animate-spin rounded-full h-10 w-10 border-3 border-blue-500 border-t-transparent'></div>
+          <div className='space-y-4'>
+            <SkeletonCreationItem />
+            <SkeletonCreationItem />
+            <SkeletonCreationItem />
           </div>
         ) : (
           <div className='space-y-4'>

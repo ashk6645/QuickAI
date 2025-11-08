@@ -10,30 +10,33 @@ import RemoveBackground from "./pages/RemoveBackground.jsx";
 import RemoveObject from "./pages/RemoveObject.jsx";
 import ReviewResume from "./pages/ReviewResume.jsx";
 import Community from "./pages/Community.jsx";
-import { useAuth } from "@clerk/clerk-react";
-import { useEffect } from "react";
+import NotFound from "./pages/NotFound.jsx";
 import { Toaster } from "react-hot-toast";
+import ErrorBoundary from "./components/ErrorBoundary.jsx";
 
 
 const App = () => {
 
   return (
-    <div>
-      <Toaster />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/ai" element={<Layout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="write-article" element={<WriteArticle />} />
-          <Route path="blog-titles" element={<BlogTitles/>} />
-          <Route path="generate-images" element={<GenerateImages/>} />
-          <Route path="remove-background" element={<RemoveBackground/>} />
-          <Route path="remove-object" element={<RemoveObject/>} />
-          <Route path="review-resume" element={<ReviewResume/>} />
-          <Route path="community" element={<Community/>} />
-        </Route>
-      </Routes>
-    </div>
+    <ErrorBoundary>
+      <div>
+        <Toaster position="top-right" />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/ai" element={<Layout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="write-article" element={<WriteArticle />} />
+            <Route path="blog-titles" element={<BlogTitles/>} />
+            <Route path="generate-images" element={<GenerateImages/>} />
+            <Route path="remove-background" element={<RemoveBackground/>} />
+            <Route path="remove-object" element={<RemoveObject/>} />
+            <Route path="review-resume" element={<ReviewResume/>} />
+            <Route path="community" element={<Community/>} />
+          </Route>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </div>
+    </ErrorBoundary>
   );
 };
 

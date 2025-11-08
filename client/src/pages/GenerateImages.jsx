@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 import axios from 'axios'
 import { useAuth } from '@clerk/clerk-react';
 import toast from 'react-hot-toast';
+import { ActionButtons } from '../components/ActionButtons';
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
 
@@ -117,11 +118,14 @@ const GenerateImages = () => {
 
         {/* Output Card */}
         <div className='bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col'>
-          <div className='flex items-center gap-3 mb-6'>
-            <div className='w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center'>
-              <Image className='w-5 h-5 text-gray-600' />
+          <div className='flex items-center justify-between mb-6'>
+            <div className='flex items-center gap-3'>
+              <div className='w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center'>
+                <Image className='w-5 h-5 text-gray-600' />
+              </div>
+              <h1 className='text-xl font-semibold text-gray-900'>Generated Images</h1>
             </div>
-            <h1 className='text-xl font-semibold text-gray-900'>Generated Images</h1>
+            {content && <ActionButtons content={content} type="image" filename={`quickai-image-${Date.now()}`} />}
           </div>
           
           {!content ? (
