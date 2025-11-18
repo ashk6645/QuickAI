@@ -232,45 +232,79 @@ export const resumeReview = async (req, res) => {
 
 		const dataBuffer = fs.readFileSync(resume.path);
 		const pdfData = await pdf(dataBuffer);
-		const prompt = `Analyze the following resume and provide concise, actionable feedback in BULLET POINTS ONLY. 
+		const prompt = `Analyze the following resume and provide a comprehensive review with ATS score and job recommendations.
 
-First, calculate an ATS (Applicant Tracking System) Score out of 100 based on:
-- Format compatibility (standard sections, clean formatting)
-- Keyword optimization (relevant skills and keywords)
-- Section completeness (contact info, experience, education, skills)
-- Structure and readability
-- Industry-standard best practices
+CRITICAL FORMATTING RULES - FOLLOW EXACTLY:
+1. Section headings: Use ## for markdown headings (e.g., ## STRENGTHS)
+2. NEVER use bullets (•) before headings
+3. NEVER mix asterisks (*) with headings
+4. Leave one blank line after each heading only not after the bullet points.
+5. Each bullet point MUST be on its own separate line, change to next line when one bullet point ends.
+6. Keep bullets concise (max 15 words each)
 
-Then format your response EXACTLY like this:
+Format your response EXACTLY like this:
 
-**ATS SCORE:** [Score out of 100] - [Brief explanation of the score]
+## ATS SCORE
+78/100 - Strong keyword usage but needs more quantified achievements and formatting consistency.
 
-**STRENGTHS:**
-• [Key strength 1]
-• [Key strength 2]
-• [Key strength 3]
+## STRENGTHS
 
-**AREAS FOR IMPROVEMENT:**
-• [Improvement 1]
-• [Improvement 2]
-• [Improvement 3]
+• Strong technical skillset in frontend and backend development
 
-**CONTENT QUALITY:**
-• [Content feedback 1]
-• [Content feedback 2]
+• Demonstrated experience building full-stack applications
 
-**STRUCTURE & FORMAT:**
-• [Format feedback 1]
-• [Format feedback 2]
+• Proven track record of improving user engagement
 
-**OVERALL RATING:** [X/10]
+## AREAS FOR IMPROVEMENT
 
-**TOP RECOMMENDATIONS:**
-• [Action item 1]
-• [Action item 2]
-• [Action item 3]
+• Quantify achievements with specific metrics and numbers
 
-Keep each bullet point to 1-2 sentences maximum. Be specific and actionable. The ATS Score should be a number between 0-100.
+• Standardize bullet point format across all sections
+
+• Add specific dates (month, year) for education and certifications
+
+## CONTENT QUALITY
+
+• Technical skills are well-organized and relevant
+
+• Project descriptions demonstrate hands-on experience
+
+## STRUCTURE & FORMAT
+
+• Clear section organization with logical flow
+
+• Could benefit from consistent date formatting
+
+## ATS OPTIMIZATION TIPS
+
+• Include keywords from target job descriptions naturally
+
+• Use standard section headers (Experience, Education, Skills)
+
+• Save as PDF format for best ATS compatibility
+
+## RECOMMENDED JOB ROLES
+
+• Full Stack Developer - Strong experience in both frontend and backend
+
+• Software Engineer - Broad technical skills across multiple technologies
+
+• Frontend Developer - Solid React and JavaScript expertise
+
+• Backend Developer - Good experience with Node.js and databases
+
+• Web Developer - Comprehensive web development skillset
+
+## OVERALL RATING
+8/10
+
+## TOP PRIORITY ACTIONS
+
+• Add quantifiable metrics to all project achievements
+
+• Ensure consistent formatting across all sections
+
+• Include month and year for all dates
 
 Resume Content:
 ${pdfData.text}`;
