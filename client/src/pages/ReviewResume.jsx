@@ -13,6 +13,7 @@ const ReviewResume = () => {
   const [loading, setLoading] = useState(false);
   const [content, setContent] = useState('');
   const [fileName, setFileName] = useState('');
+  const [atsScore, setAtsScore] = useState(null);
 
   const { getToken } = useAuth();
 
@@ -20,6 +21,8 @@ const ReviewResume = () => {
     const file = e.target.files[0];
     setInput(file);
     setFileName(file ? file.name : '');
+    setAtsScore(null);
+    setContent('');
   };
 
   const onSubmitHandler = async (e) => {
@@ -43,6 +46,7 @@ const ReviewResume = () => {
           .replace(/([•\-*]\s*)([A-Za-z])/g, '• $2'); // Ensure proper bullets
 
         setContent(formattedContent);
+        setAtsScore(data.atsScore);
       } else {
         toast.error(data.message);
       }
@@ -135,6 +139,76 @@ const ReviewResume = () => {
               />
             )}
           </div>
+
+          {/* ATS Score Display */}
+          {atsScore !== null && (
+            <div className="mb-6 p-5 rounded-xl bg-gradient-to-br from-teal-50 to-cyan-50 border border-teal-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-sm font-medium text-gray-700 mb-1">ATS Score</h2>
+                  <p className="text-xs text-gray-600">Applicant Tracking System Compatibility</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="relative w-20 h-20">
+                    <svg className="transform -rotate-90 w-20 h-20">
+                      <circle
+                        cx="40"
+                        cy="40"
+                        r="36"
+                        stroke="currentColor"
+                        strokeWidth="6"
+                        fill="none"
+                        className="text-gray-200"
+                      />
+                      <circle
+                        cx="40"
+                        cy="40"
+                        r="36"
+                        stroke="currentColor"
+                        strokeWidth="6"
+                        fill="none"
+                        strokeDasharray={`${2 * Math.PI * 36}`}
+                        strokeDashoffset={`${2 * Math.PI * 36 * (1 - atsScore / 100)}`}
+                        className={`transition-all duration-500 ${
+                          atsScore >= 80
+                            ? 'text-teal-600'
+                            : atsScore >= 60
+                            ? 'text-yellow-500'
+                            : 'text-red-500'
+                        }`}
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className={`text-2xl font-bold ${
+                        atsScore >= 80
+                          ? 'text-teal-600'
+                          : atsScore >= 60
+                          ? 'text-yellow-600'
+                          : 'text-red-600'
+                      }`}>
+                        {atsScore}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-3 pt-3 border-t border-teal-200">
+                <p className={`text-xs font-medium ${
+                  atsScore >= 80
+                    ? 'text-teal-700'
+                    : atsScore >= 60
+                    ? 'text-yellow-700'
+                    : 'text-red-700'
+                }`}>
+                  {atsScore >= 80
+                    ? '✓ Excellent ATS compatibility'
+                    : atsScore >= 60
+                    ? '⚠ Good, but could be improved'
+                    : '⚠ Needs significant improvements for ATS'}
+                </p>
+              </div>
+            </div>
+          )}
 
           {!content ? (
             <div className="flex-1 flex flex-col justify-center items-center text-center py-10">
