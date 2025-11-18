@@ -9,6 +9,7 @@ import GenerateImages from "./pages/GenerateImages.jsx";
 import RemoveBackground from "./pages/RemoveBackground.jsx";
 import RemoveObject from "./pages/RemoveObject.jsx";
 import ReviewResume from "./pages/ReviewResume.jsx";
+import JobOpportunities from "./pages/JobOpportunities.jsx";
 import Community from "./pages/Community.jsx";
 import NotFound from "./pages/NotFound.jsx";
 import { Toaster } from "react-hot-toast";
@@ -31,6 +32,7 @@ const App = () => {
             <Route path="remove-background" element={<RemoveBackground/>} />
             <Route path="remove-object" element={<RemoveObject/>} />
             <Route path="review-resume" element={<ReviewResume/>} />
+            <Route path="job-opportunities" element={<JobOpportunities/>} />
             <Route path="community" element={<Community/>} />
           </Route>
           <Route path="*" element={<NotFound />} />

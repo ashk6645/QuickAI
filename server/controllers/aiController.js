@@ -306,3 +306,205 @@ ${pdfData.text}`;
 		res.json({ success: false, message: error.message });
 	}
 };
+
+export const findJobOpportunities = async (req, res) => {
+	try {
+		const { userId } = req.auth();
+		const resume = req.file;
+		const plan = req.plan;
+
+		if (plan !== "premium") {
+			return res.json({
+				success: false,
+				message:
+					"This feature is only available for premium users. Upgrade to premium to use this feature.",
+			});
+		}
+
+		if (resume.size > 5 * 1024 * 1024) {
+			return res.json({
+				success: false,
+				message:
+					"Resume file size exceeds 5MB limit. Please upload a smaller file.",
+			});
+		}
+
+		const dataBuffer = fs.readFileSync(resume.path);
+		const pdfData = await pdf(dataBuffer);
+
+		const analysisPrompt = `Analyze the following resume and extract key information to suggest relevant job opportunities.
+
+Resume Content:
+${pdfData.text}
+
+Based on the resume, provide:
+1. Key skills and technologies mentioned
+2. Years of experience and level (junior/mid/senior)
+3. Industry/domain expertise
+4. Education background
+5. Key achievements and responsibilities
+
+Then, suggest 8-12 specific job titles/roles that would be a good fit for this candidate. Format your response as a JSON array of job titles, where each job title is a string.
+
+Example format:
+["Software Engineer", "Full Stack Developer", "Frontend Developer", "Backend Engineer", "DevOps Engineer", "Product Manager", "Technical Lead", "Senior Software Engineer"]
+
+Return ONLY the JSON array, no other text.`;
+
+		const analysisResponse = await AI.chat.completions.create({
+			model: "gemini-2.0-flash",
+			messages: [
+				{
+					role: "user",
+					content: analysisPrompt,
+				},
+			],
+			temperature: 0.7,
+			max_tokens: 500,
+		});
+
+		let jobTitles = [];
+		try {
+			const content = analysisResponse.choices[0].message.content.trim();
+			// Extract JSON array from response (handle cases where LLM adds extra text)
+			const jsonMatch = content.match(/\[[\s\S]*\]/);
+			if (jsonMatch) {
+				jobTitles = JSON.parse(jsonMatch[0]);
+			} else {
+				// Fallback: try to parse the entire content
+				jobTitles = JSON.parse(content);
+			}
+		} catch (parseError) {
+			// If JSON parsing fails, extract job titles from text
+			const content = analysisResponse.choices[0].message.content;
+			jobTitles = content
+				.split("\n")
+				.map((line) => line.replace(/^[-•\d.\s"]+|["\s]+$/g, "").trim())
+				.filter((line) => line.length > 0 && line.length < 100)
+				.slice(0, 12);
+		}
+
+		// Ensure we have an array
+		if (!Array.isArray(jobTitles) || jobTitles.length === 0) {
+			jobTitles = [
+				"Software Engineer",
+				"Full Stack Developer",
+				"Frontend Developer",
+				"Backend Engineer",
+			];
+		}
+
+		await sql`INSERT INTO creations (user_id, prompt, content, type) VALUES (${userId}, 'Find job opportunities', ${JSON.stringify(
+			jobTitles
+		)}, 'job-opportunities')`;
+
+		res.json({ success: true, jobTitles });
+	} catch (error) {
+		console.log(error.message);
+		res.json({ success: false, message: error.message });
+	}
+};
+
+export const searchJobs = async (req, res) => {
+	try {
+		const { jobTitle } = req.body;
+		const plan = req.plan;
+
+		if (plan !== "premium") {
+			return res.json({
+				success: false,
+				message:
+					"This feature is only available for premium users. Upgrade to premium to use this feature.",
+			});
+		}
+
+		// Use web search to find active job listings
+		// For now, we'll return a search URL and use LLM to generate relevant job search queries
+		// In production, you'd integrate with job APIs like Adzuna, Indeed, LinkedIn, etc.
+
+		const searchPrompt = `Generate a comprehensive job search query for the position: "${jobTitle}"
+
+Provide:
+1. Optimized search keywords for job boards
+2. Relevant job board suggestions (LinkedIn, Indeed, Glassdoor, etc.)
+3. Search URL parameters that would help find active listings
+
+Format as JSON:
+{
+	"keywords": "string",
+	"jobBoards": ["board1", "board2"],
+	"searchUrls": {
+		"indeed": "url",
+		"linkedin": "url",
+		"glassdoor": "url"
+	}
+}`;
+
+		const searchResponse = await AI.chat.completions.create({
+			model: "gemini-2.0-flash",
+			messages: [
+				{
+					role: "user",
+					content: searchPrompt,
+				},
+			],
+			temperature: 0.7,
+			max_tokens: 300,
+		});
+
+		const encodedTitle = encodeURIComponent(jobTitle);
+
+		// Default search URLs - always provide these
+		const defaultSearchUrls = {
+			indeed: `https://www.indeed.com/jobs?q=${encodedTitle}`,
+			linkedin: `https://www.linkedin.com/jobs/search/?keywords=${encodedTitle}`,
+			glassdoor: `https://www.glassdoor.com/Job/jobs.htm?sc.keyword=${encodedTitle}`,
+		};
+
+		let searchData = {
+			keywords: jobTitle,
+			jobBoards: ["LinkedIn", "Indeed", "Glassdoor"],
+			searchUrls: defaultSearchUrls,
+		};
+
+		try {
+			const content = searchResponse.choices[0].message.content.trim();
+			const jsonMatch = content.match(/\{[\s\S]*\}/);
+			if (jsonMatch) {
+				const parsedData = JSON.parse(jsonMatch[0]);
+				// Merge LLM response with defaults, ensuring URLs always exist
+				searchData = {
+					keywords: parsedData.keywords || jobTitle,
+					jobBoards: parsedData.jobBoards || [
+						"LinkedIn",
+						"Indeed",
+						"Glassdoor",
+					],
+					searchUrls: {
+						indeed: parsedData.searchUrls?.indeed || defaultSearchUrls.indeed,
+						linkedin:
+							parsedData.searchUrls?.linkedin || defaultSearchUrls.linkedin,
+						glassdoor:
+							parsedData.searchUrls?.glassdoor || defaultSearchUrls.glassdoor,
+					},
+				};
+			}
+		} catch (parseError) {
+			console.log(
+				"Error parsing LLM response, using defaults:",
+				parseError.message
+			);
+			// Use defaults already set above
+		}
+
+		// Ensure searchUrls always exists and has all required properties
+		if (!searchData.searchUrls) {
+			searchData.searchUrls = defaultSearchUrls;
+		}
+
+		res.json({ success: true, searchData });
+	} catch (error) {
+		console.log(error.message);
+		res.json({ success: false, message: error.message });
+	}
+};
