@@ -4,6 +4,7 @@ import axios from 'axios'
 import { useAuth } from '@clerk/clerk-react';
 import toast from 'react-hot-toast';
 import Markdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { ActionButtons } from '../components/ActionButtons';
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
@@ -26,7 +27,19 @@ const WriteArticle = () => {
     e.preventDefault();
     try {
       setLoading(true)
-      const prompt = `Write an article about ${input} in ${selectedLength.text}`
+      const prompt = `Write a well-structured, professional article about "${input}".
+
+Requirements:
+- Length: ${selectedLength.text}
+- Use proper markdown formatting with headings (# for main sections, ## for subsections)
+- Include an engaging introduction
+- Break content into clear sections with descriptive headings
+- Use proper spacing between paragraphs
+- Include bullet points or numbered lists where appropriate
+- End with a compelling conclusion
+- Make it SEO-friendly and easy to read
+
+Format the article in clean markdown with proper spacing.`
       const { data } = await axios.post('/api/ai/generate-article', {
         prompt,
         length: selectedLength.length
@@ -37,7 +50,13 @@ const WriteArticle = () => {
       })
 
       if (data.success) {
-        setContent(data.content)
+        // Remove markdown code fence if present
+        let cleanContent = data.content;
+        if (cleanContent.startsWith('```markdown') || cleanContent.startsWith('```')) {
+          cleanContent = cleanContent.replace(/^```markdown\n?/, '').replace(/^```\n?/, '').replace(/\n?```$/, '');
+        }
+        console.log('Cleaned content:', cleanContent);
+        setContent(cleanContent)
       } else {
         toast.error(data.message)
       }
@@ -126,8 +145,25 @@ const WriteArticle = () => {
               <p className='text-gray-500 max-w-xs'>Enter a topic and click "Generate Article" to get started</p>
             </div>
           ) : (
-            <div className='prose prose-sm max-w-none text-gray-700 flex-1 max-h-[400px] overflow-auto'>
-              <Markdown>{content}</Markdown>
+            <div className='flex-1 max-h-[400px] overflow-auto px-4 py-3'>
+              <Markdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  h1: ({children}) => <h1 className='text-3xl font-bold text-gray-900 mb-6 mt-8 border-b-2 border-gray-200 pb-3'>{children}</h1>,
+                  h2: ({children}) => <h2 className='text-2xl font-bold text-gray-800 mb-4 mt-6'>{children}</h2>,
+                  h3: ({children}) => <h3 className='text-xl font-semibold text-gray-700 mb-3 mt-5'>{children}</h3>,
+                  h4: ({children}) => <h4 className='text-lg font-semibold text-gray-700 mb-2 mt-4'>{children}</h4>,
+                  p: ({children}) => <p className='text-gray-700 mb-4 leading-7 text-base'>{children}</p>,
+                  ul: ({children}) => <ul className='list-disc ml-8 mb-4 space-y-2'>{children}</ul>,
+                  ol: ({children}) => <ol className='list-decimal ml-8 mb-4 space-y-2'>{children}</ol>,
+                  li: ({children}) => <li className='text-gray-700 leading-7'>{children}</li>,
+                  strong: ({children}) => <strong className='font-bold text-gray-900'>{children}</strong>,
+                  em: ({children}) => <em className='italic text-gray-600'>{children}</em>,
+                  blockquote: ({children}) => <blockquote className='border-l-4 border-blue-500 pl-4 italic text-gray-600 my-4 bg-blue-50 py-2'>{children}</blockquote>,
+                }}
+              >
+                {content}
+              </Markdown>
             </div>
           )}
         </div>

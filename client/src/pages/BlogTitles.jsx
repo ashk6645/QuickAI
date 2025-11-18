@@ -135,7 +135,15 @@ Example format:
             </div>
           ) : (
             <div className='prose prose-sm max-w-none text-gray-700 flex-1 overflow-auto'>
-              <Markdown>{content}</Markdown>
+              <Markdown 
+                components={{
+                  ol: ({node, ...props}) => <ol className='list-decimal list-inside space-y-2 text-gray-800' {...props} />,
+                  li: ({node, ...props}) => <li className='py-1.5 px-3 hover:bg-gray-50 rounded transition cursor-pointer text-base leading-relaxed' {...props} />,
+                  p: ({node, ...props}) => <p className='mb-2' {...props} />
+                }}
+              >
+                {content}
+              </Markdown>
             </div>
           )}
         </div>
