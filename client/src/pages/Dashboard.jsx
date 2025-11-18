@@ -29,6 +29,24 @@ const Dashboard = () => {
     setLoading(false);
   }
 
+  const handleDeleteCreation = async (id) => {
+    try {
+      const { data } = await axios.post('/api/user/delete-creation', 
+        { id },
+        { headers: { Authorization: `Bearer ${await getToken()}` } }
+      );
+      
+      if (data.success) {
+        toast.success(data.message);
+        setCreations(creations.filter(creation => creation.id !== id));
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    }
+  }
+
   useEffect(() => {
     getDashboardData()
   }, [])
@@ -84,7 +102,7 @@ const Dashboard = () => {
             {creations.length > 0 ? (
                 <div className="h-[400px] overflow-scroll space-y-4" >
                   {creations.map((item) => (
-                    <CreationItem key={item.id} item={item} />
+                    <CreationItem key={item.id} item={item} onDelete={handleDeleteCreation} />
                     ))}
                 </div>
             ) : (
