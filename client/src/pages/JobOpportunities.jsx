@@ -97,21 +97,6 @@ const JobOpportunities = () => {
   return (
     <div className="h-full overflow-y-auto">
       <div className="p-6 max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-              <Briefcase className="w-5 h-5 text-white" />
-            </div>
-            <h1 className="text-2xl font-semibold text-gray-900">
-              Job Opportunities
-            </h1>
-          </div>
-          <p className="text-gray-600 text-sm">
-            Upload your resume to discover relevant job opportunities tailored
-            to your skills and experience.
-          </p>
-        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Upload Section */}
