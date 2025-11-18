@@ -5,7 +5,7 @@ import star_icon from "./star_icon.svg";
 import star_dull_icon from "./star_dull_icon.svg";
 import profile_img_1 from "./profile_img_1.png";
 import arrow_icon from "./arrow_icon.svg";
-import { SquarePen, Hash, Image, Eraser, Scissors, FileText } from 'lucide-react'
+import { SquarePen, Hash, Image, Eraser, Scissors, FileText, Briefcase, Users } from 'lucide-react'
 import ai_gen_img_1 from "./ai_gen_img_1.png";
 import ai_gen_img_2 from "./ai_gen_img_2.png";
 import ai_gen_img_3 from "./ai_gen_img_3.png";
@@ -62,6 +62,20 @@ export const AiToolsData = [
         Icon: FileText,
         bg: { from: '#12B7AC', to: '#08B6CE' },
         path: '/ai/review-resume'
+    },
+    {
+        title: 'Job Opportunities',
+        description: 'Discover relevant job openings across top platforms based on your resume and skills.',
+        Icon: Briefcase,
+        bg: { from: '#FF6B6B', to: '#EE5A6F' },
+        path: '/ai/job-opportunities'
+    },
+    {
+        title: 'Community',
+        description: 'Explore and share AI-generated content with our creative community of users.',
+        Icon: Users,
+        bg: { from: '#8B5CF6', to: '#7C3AED' },
+        path: '/ai/community'
     }
 ]
 
