@@ -508,3 +508,134 @@ Format as JSON:
 		res.json({ success: false, message: error.message });
 	}
 };
+
+export const generateLearningResources = async (req, res) => {
+	try {
+		const { userId } = req.auth();
+		const { jobDescription } = req.body;
+		const plan = req.plan;
+		const free_usage = req.free_usage;
+
+		if (plan !== "premium" && free_usage >= 10) {
+			return res.json({
+				success: false,
+				message:
+					"You have reached your free usage limit. Upgrade to premium for more usage.",
+			});
+		}
+
+		if (!jobDescription || jobDescription.trim().length === 0) {
+			return res.json({
+				success: false,
+				message: "Job description is required.",
+			});
+		}
+
+		const prompt = `Analyze the following job description and extract the key skills and technologies required. Then, for each skill, provide learning resources including:
+
+1. YouTube video links (2-3 per skill) - provide actual YouTube URLs
+2. Articles from well-known sites like GeeksforGeeks (GFG), Medium, freeCodeCamp, etc. (2-3 per skill) - provide actual URLs
+
+Job Description:
+${jobDescription}
+
+Format your response as a JSON object with the following structure:
+{
+  "skills": [
+    {
+      "skillName": "Skill Name",
+      "resources": {
+        "youtube": [
+          {
+            "title": "Video Title",
+            "url": "https://www.youtube.com/watch?v=...",
+            "description": "Brief description"
+          }
+        ],
+        "articles": [
+          {
+            "title": "Article Title",
+            "url": "https://www.geeksforgeeks.org/...",
+            "source": "GeeksforGeeks",
+            "description": "Brief description"
+          }
+        ]
+      }
+    }
+  ]
+}
+
+IMPORTANT:
+- Extract 5-8 key skills from the job description
+- For each skill, provide 2-3 YouTube videos and 2-3 articles
+- Use real, actual URLs (you can generate realistic YouTube video IDs and GeeksforGeeks article URLs based on the skill)
+- Focus on well-known educational platforms: YouTube, GeeksforGeeks, freeCodeCamp, Medium, MDN Web Docs, W3Schools, etc.
+- Return ONLY valid JSON, no markdown formatting or additional text
+
+Return the JSON object now:`;
+
+		const response = await AI.chat.completions.create({
+			model: "gemini-2.0-flash",
+			messages: [
+				{
+					role: "user",
+					content: prompt,
+				},
+			],
+			temperature: 0.7,
+			max_tokens: 4000,
+		});
+
+		let learningResources = { skills: [] };
+
+		try {
+			const content = response.choices[0].message.content.trim();
+			// Extract JSON from response (handle markdown code blocks if present)
+			const jsonMatch = content.match(/\{[\s\S]*\}/);
+			if (jsonMatch) {
+				learningResources = JSON.parse(jsonMatch[0]);
+			} else {
+				learningResources = JSON.parse(content);
+			}
+
+			// Validate structure
+			if (
+				!learningResources.skills ||
+				!Array.isArray(learningResources.skills)
+			) {
+				throw new Error("Invalid response structure");
+			}
+		} catch (parseError) {
+			console.log("Error parsing LLM response:", parseError.message);
+			// Fallback: create a basic structure
+			learningResources = {
+				skills: [
+					{
+						skillName: "General Skills",
+						resources: {
+							youtube: [],
+							articles: [],
+						},
+					},
+				],
+			};
+		}
+
+		await sql`INSERT INTO creations (user_id, prompt, content, type) VALUES (${userId}, ${`Generate learning resources for job description`}, ${JSON.stringify(
+			learningResources
+		)}, 'learning-resources')`;
+
+		if (plan !== "premium") {
+			await clerkClient.users.updateUserMetadata(userId, {
+				privateMetadata: {
+					free_usage: free_usage + 1,
+				},
+			});
+		}
+
+		res.json({ success: true, learningResources });
+	} catch (error) {
+		console.log(error.message);
+		res.json({ success: false, message: error.message });
+	}
+};

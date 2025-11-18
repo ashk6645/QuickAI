@@ -1,5 +1,6 @@
+/* eslint-disable no-unused-vars */
 import { Protect, useClerk, useUser } from '@clerk/clerk-react';
-import { Eraser, FileText, Hash, House, Image, LogOut, Scissors, SquarePen, Users, Briefcase } from 'lucide-react';
+import { Eraser, FileText, Hash, House, Image, LogOut, Scissors, SquarePen, Users, Briefcase, Book } from 'lucide-react';
 import React from 'react'
 import { NavLink } from 'react-router-dom';
 
@@ -11,7 +12,8 @@ const navItems = [
     {to: '/ai/remove-background', label: 'Remove Background', Icon: Eraser},
     {to: '/ai/remove-object', label: 'Remove Object', Icon: Scissors},
     {to: '/ai/review-resume', label: 'Review Resume', Icon: FileText},
-    {to: '/ai/job-opportunities', label: 'Job Opportunities', Icon: Briefcase},
+    { to: '/ai/job-opportunities', label: 'Job Opportunities', Icon: Briefcase },
+    { to: '/ai/learning-resources', label: 'Learning Resources', Icon: Book },
     {to: '/ai/community', label: 'Community', Icon: Users},
 ]
 
