@@ -340,3 +340,248 @@ ${pdfData.text}`;
 		res.json({ success: false, message: error.message });
 	}
 };
+
+export const jobSearch = async (req, res) => {
+	try {
+		const { userId } = req.auth();
+		const { inputType, jobDescription } = req.body;
+
+		let prompt = '';
+
+		if (inputType === 'jd') {
+			// Search by Job Description
+			prompt = `You are an AI career assistant. Based on the following job description, find and recommend similar job openings that match the requirements.
+
+Job Description:
+${jobDescription}
+
+Provide a comprehensive list of job opportunities in the following format:
+
+## RECOMMENDED JOB OPPORTUNITIES
+
+For each job opening (provide at least 8-10 opportunities), include:
+
+### [Job Title] at [Company Name]
+
+• **Platform:** [Internshala/LinkedIn/Instahyre/Naukri/Indeed/Glassdoor]
+
+• **Location:** [City/Remote/Hybrid]
+
+• **Experience:** [Required experience level]
+
+• **Skills Required:** [Key skills]
+
+• **Link:** [Provide a realistic search URL based on the platform and job title]
+
+Example link formats:
+- Internshala: https://internshala.com/jobs/[job-role]-jobs
+- LinkedIn: https://www.linkedin.com/jobs/search/?keywords=[job-title]
+- Instahyre: https://www.instahyre.com/search-jobs/[job-role]/
+- Naukri: https://www.naukri.com/[job-role]-jobs
+- Indeed: https://www.indeed.com/jobs?q=[job-title]
+- Glassdoor: https://www.glassdoor.com/Job/jobs.htm?sc.keyword=[job-title]
+
+## SEARCH STRATEGY TIPS
+
+Provide 3-4 tips on how to search effectively for this role.
+
+**FORMATTING RULES:**
+1. Use ## for main headings
+2. Use ### for job titles
+3. Use bullet points (•) for job details
+4. Add a blank line between each job listing
+5. Make all links clickable
+6. NEVER use asterisks (*) or bullets (•) before headings
+7. Keep job descriptions concise and actionable`;
+		} else {
+			// Search by Resume
+			const pdfBuffer = req.file.buffer;
+			const pdfData = await pdf(pdfBuffer);
+
+			prompt = `You are an AI career assistant. Based on the following resume, recommend job roles and openings that match the candidate's profile.
+
+Resume Content:
+${pdfData.text}
+
+Provide a comprehensive list of job opportunities in the following format:
+
+## YOUR PROFILE SUMMARY
+
+Briefly summarize the candidate's key skills, experience level, and strengths.
+
+## RECOMMENDED JOB OPPORTUNITIES
+
+For each job opening (provide at least 8-10 opportunities), include:
+
+### [Job Title] at [Company Name]
+
+• **Platform:** [Internshala/LinkedIn/Instahyre/Naukri/Indeed/Glassdoor]
+
+• **Match Score:** [X/10] - [Why this role matches]
+
+• **Location:** [City/Remote/Hybrid]
+
+• **Experience:** [Required experience level]
+
+• **Skills Required:** [Key skills]
+
+• **Link:** [Provide a realistic search URL based on the platform and job title]
+
+Example link formats:
+- Internshala: https://internshala.com/jobs/[job-role]-jobs
+- LinkedIn: https://www.linkedin.com/jobs/search/?keywords=[job-title]
+- Instahyre: https://www.instahyre.com/search-jobs/[job-role]/
+- Naukri: https://www.naukri.com/[job-role]-jobs
+- Indeed: https://www.indeed.com/jobs?q=[job-title]
+- Glassdoor: https://www.glassdoor.com/Job/jobs.htm?sc.keyword=[job-title]
+
+## CAREER GROWTH OPPORTUNITIES
+
+List 3-4 career paths or roles the candidate can aim for in the next 1-2 years.
+
+**FORMATTING RULES:**
+1. Use ## for main headings
+2. Use ### for job titles
+3. Use bullet points (•) for job details
+4. Add a blank line between each job listing
+5. Make all links clickable
+6. NEVER use asterisks (*) or bullets (•) before headings
+7. Keep job descriptions concise and actionable`;
+		}
+
+		const response = await AI.chat.completions.create({
+			model: "gemini-2.0-flash",
+			messages: [
+				{
+					role: "user",
+					content: prompt,
+				},
+			],
+			temperature: 0.7,
+			max_tokens: 1500,
+		});
+
+		const content = response.choices[0].message.content;
+
+		const promptText = inputType === 'jd' ? `Job search based on JD` : `Job search based on resume`;
+		await sql`INSERT INTO creations (user_id, prompt, content, type) VALUES (${userId}, ${promptText}, ${content}, 'job-search')`;
+
+		res.json({ success: true, content });
+	} catch (error) {
+		console.log(error.message);
+		res.json({ success: false, message: error.message });
+	}
+};
+
+export const learningContent = async (req, res) => {
+	try {
+		const { userId } = req.auth();
+		const { inputType, jobDescription } = req.body;
+
+		let jdText = '';
+
+		if (inputType === 'text') {
+			jdText = jobDescription;
+		} else {
+			// PDF upload
+			const pdfBuffer = req.file.buffer;
+			const pdfData = await pdf(pdfBuffer);
+			jdText = pdfData.text;
+		}
+
+		const prompt = `You are an AI career development assistant. Based on the following job description, create a comprehensive and structured learning path with curated resources.
+
+Job Description:
+${jdText}
+
+Provide learning resources in the following structured format:
+
+## 🎯 SKILLS TO LEARN
+
+List the top 5-7 key skills required for this role.
+
+## 📚 LEARNING PATH
+
+### 1. [Skill/Topic Name]
+
+**Why Learn This:** Brief explanation of importance
+
+**YouTube Videos:**
+
+• **[Video Title]** - [Channel Name]
+  Link: https://www.youtube.com/results?search_query=[relevant+search+terms]
+  Duration: [Estimated]
+
+• **[Video Title]** - [Channel Name]
+  Link: https://www.youtube.com/results?search_query=[relevant+search+terms]
+  Duration: [Estimated]
+
+**Articles & Tutorials:**
+
+• **[Article Title]**
+  Link: https://www.google.com/search?q=[relevant+search+terms]
+  Source: [Website/Platform]
+
+• **[Article Title]**
+  Link: https://www.google.com/search?q=[relevant+search+terms]
+  Source: [Website/Platform]
+
+**Practice Resources:**
+
+• Platform/Resource recommendations for hands-on practice
+
+(Repeat this structure for each major skill/topic)
+
+## 🎓 RECOMMENDED COURSES
+
+List 3-4 online courses (Udemy, Coursera, freeCodeCamp, etc.) with search links:
+
+• **[Course Title]** - [Platform]
+  Link: https://www.udemy.com/courses/search/?q=[topic]
+  Level: [Beginner/Intermediate/Advanced]
+
+## 📖 ADDITIONAL RESOURCES
+
+• Documentation links
+• GitHub repositories for practice
+• Community forums and discussion boards
+• Certification recommendations
+
+## ⏱️ LEARNING TIMELINE
+
+Provide a realistic timeline (e.g., 3-6 months) with weekly breakdown.
+
+**FORMATTING RULES:**
+1. Use ## for main sections with emojis
+2. Use ### for subsections
+3. Use bullet points (•) for all items
+4. Add a blank line between each resource item
+5. Use realistic search URLs for YouTube, Google, and course platforms
+6. Make all links clickable
+7. Keep descriptions concise and actionable
+8. Prioritize FREE resources but mention premium options
+9. Include difficulty levels where applicable`;
+
+		const response = await AI.chat.completions.create({
+			model: "gemini-2.0-flash",
+			messages: [
+				{
+					role: "user",
+					content: prompt,
+				},
+			],
+			temperature: 0.7,
+			max_tokens: 2000,
+		});
+
+		const content = response.choices[0].message.content;
+
+		const promptText = inputType === 'text' ? `Learning content for JD (text)` : `Learning content for JD (PDF)`;
+		await sql`INSERT INTO creations (user_id, prompt, content, type) VALUES (${userId}, ${promptText}, ${content}, 'learning-content')`;
+
+		res.json({ success: true, content });
+	} catch (error) {
+		console.log(error.message);
+		res.json({ success: false, message: error.message });
+	}
+};
