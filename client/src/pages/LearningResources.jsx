@@ -128,7 +128,7 @@ const LearningResources = () => {
 									<textarea
 										value={jobDescription}
 										onChange={(e) => setJobDescription(e.target.value)}
-										rows={12}
+										rows={10}
 										className='w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition resize-none'
 										placeholder='Paste the job description here...&#10;&#10;Example:&#10;We are looking for a Full Stack Developer with experience in React, Node.js, and MongoDB...'
 										required
@@ -165,7 +165,7 @@ const LearningResources = () => {
 								</h2>
 							</div>
 
-							<div className='h-[480px] overflow-scroll'>
+							<div className='h-[400px] overflow-scroll'>
 								{!learningResources ? (
 									<div className='flex flex-col justify-center items-center text-center py-16'>
 										<div className='w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4'>
