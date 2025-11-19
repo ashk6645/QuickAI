@@ -52,82 +52,89 @@ const RemoveBackground = () => {
   }
 
   return (
-    <div className='p-6'>
-      <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
-        {/* Input Card */}
-        <div className='bg-white p-6 rounded-xl border border-gray-100 shadow-sm'>
-          <div className='flex items-center gap-3 mb-6'>
-            <div className='w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center'>
-              <Sparkles className='w-5 h-5 text-white' />
-            </div>
-            <h1 className='text-xl font-semibold text-gray-900'>Background Removal</h1>
-          </div>
-          
-          <form onSubmit={onSubmitHandler} className='space-y-5'>
-            <div>
-              <label className='block text-sm font-medium text-gray-700 mb-2'>Upload Image</label>
-              <div className="flex items-center justify-center w-full">
-                <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition">
-                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    <Eraser className="w-8 h-8 mb-3 text-gray-400" />
-                    <p className="mb-2 text-sm text-gray-500"><span className="font-semibold">Click to upload</span> or drag and drop</p>
-                    <p className="text-xs text-gray-500">JPG, PNG (MAX. 5MB)</p>
+    <div className='h-full overflow-y-auto'>
+      <div className='p-6 max-w-7xl mx-auto'>
+        <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
+          {/* Upload Section */}
+          <div className='lg:col-span-1'>
+            <div className='bg-white p-6 rounded-xl border border-gray-100 shadow-sm sticky top-6'>
+              <div className='flex items-center gap-3 mb-6'>
+                <div className='w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center'>
+                  <Sparkles className='w-5 h-5 text-white' />
+                </div>
+                <h2 className='text-lg font-semibold text-gray-900'>Upload Image</h2>
+              </div>
+              
+              <form onSubmit={onSubmitHandler} className='space-y-5'>
+                <div>
+                  <label className='block text-sm font-medium text-gray-700 mb-2'>Image File</label>
+                  <div className="flex items-center justify-center w-full">
+                    <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition">
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <Eraser className="w-8 h-8 mb-3 text-gray-400" />
+                        <p className="mb-2 text-sm text-gray-500"><span className="font-semibold">Click to upload</span> or drag and drop</p>
+                        <p className="text-xs text-gray-500">JPG, PNG (MAX. 5MB)</p>
+                      </div>
+                      <input 
+                        id="dropzone-file" 
+                        type="file" 
+                        accept='image/*' 
+                        onChange={handleFileChange} 
+                        className="hidden" 
+                        required 
+                      />
+                    </label>
+                  </div> 
+                </div> 
+                
+                {preview && (
+                  <div className="flex justify-center">
+                    <img src={preview} alt="Preview" className="h-40 rounded-lg object-contain" />
                   </div>
-                  <input 
-                    id="dropzone-file" 
-                    type="file" 
-                    accept='image/*' 
-                    onChange={handleFileChange} 
-                    className="hidden" 
-                    required 
-                  />
-                </label>
-              </div> 
+                )}
+                
+                <button 
+                  type="submit"
+                  disabled={loading || !input} 
+                  className='w-full flex justify-center items-center gap-2 bg-gradient-to-r from-orange-600 to-red-600 text-white px-4 py-3 rounded-lg font-medium hover:from-orange-700 hover:to-red-700 transition disabled:opacity-70 disabled:cursor-not-allowed'
+                >
+                  {loading ? (
+                    <span className='w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin'></span>
+                  ) : (
+                    <>
+                      <Eraser className='w-5 h-5' />
+                      Remove Background
+                    </>
+                  )}
+                </button>
+              </form>
             </div>
-            
-            {preview && (
-              <div className="flex justify-center">
-                <img src={preview} alt="Preview" className="h-40 rounded-lg object-contain" />
-              </div>
-            )}
-            
-            <button 
-              disabled={loading || !input} 
-              className='w-full flex justify-center items-center gap-2 bg-gradient-to-r from-orange-600 to-red-600 text-white px-4 py-3 rounded-lg font-medium hover:from-orange-700 hover:to-red-700 transition disabled:opacity-70'
-            >
-              {loading ? (
-                <span className='w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin'></span>
-              ) : (
-                <>
-                  <Eraser className='w-5 h-5' />
-                  Remove Background
-                </>
-              )}
-            </button>
-          </form>
-        </div>
-
-        {/* Output Card */}
-        <div className='bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col'>
-          <div className='flex items-center gap-3 mb-6'>
-            <div className='w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center'>
-              <Eraser className='w-5 h-5 text-gray-600' />
-            </div>
-            <h1 className='text-xl font-semibold text-gray-900'>Processed Image</h1>
           </div>
-          
-          {!content ? (
-            <div className='flex-1 flex flex-col justify-center items-center text-center py-10'>
-              <div className='w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4'>
-                <Eraser className='w-8 h-8 text-gray-400' />
+
+          {/* Output Section */}
+          <div className='lg:col-span-2'>
+            <div className='bg-white p-6 rounded-xl border border-gray-100 shadow-sm'>
+              <div className='flex items-center gap-3 mb-6'>
+                <div className='w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center'>
+                  <Eraser className='w-5 h-5 text-gray-600' />
+                </div>
+                <h2 className='text-lg font-semibold text-gray-900'>Processed Image</h2>
               </div>
-              <p className='text-gray-500 max-w-xs'>Upload an image and click "Remove Background" to get started</p>
+              
+              <div className='h-[450px] overflow-auto flex items-center justify-center'>
+                {!content ? (
+                  <div className='flex flex-col justify-center items-center text-center py-16'>
+                    <div className='w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4'>
+                      <Eraser className='w-8 h-8 text-gray-400' />
+                    </div>
+                    <p className='text-gray-500 max-w-xs'>Upload an image and click "Remove Background" to get started</p>
+                  </div>
+                ) : (
+                  <img src={content} alt="Processed content" className='max-h-full rounded-lg object-contain' />
+                )}
+              </div>
             </div>
-          ) : (
-            <div className='flex-1 flex items-center justify-center'>
-              <img src={content} alt="Processed content" className='max-h-96 rounded-lg object-contain' />
-            </div>
-          )}
+          </div>
         </div>
       </div>
     </div>

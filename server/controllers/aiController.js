@@ -548,4 +548,151 @@ Format as JSON:
     console.error("searchJobs error:", error?.message || error);
     return safeJson(res, 500, { success: false, message: error?.message || "Server error" });
   }
+  
+};
+
+export const generateLearningResources = async (req, res) => {
+	try {
+		const { userId } = req.auth();
+		const { jobDescription } = req.body;
+		const plan = req.plan;
+		const free_usage = req.free_usage;
+
+		if (plan !== "premium" && free_usage >= 10) {
+			return res.json({
+				success: false,
+				message:
+					"You have reached your free usage limit. Upgrade to premium for more usage.",
+			});
+		}
+
+		if (!jobDescription || jobDescription.trim().length === 0) {
+			return res.json({
+				success: false,
+				message: "Job description is required.",
+			});
+		}
+
+		const prompt = `Analyze the following job description and extract the key skills and technologies required. Then, for each skill, provide learning resources.
+
+Job Description:
+${jobDescription}
+
+For each skill, provide:
+1. YouTube search queries (2-3 per skill) - Provide specific search terms that users can search on YouTube
+2. Article links from well-known educational platforms (2-3 per skill) - Generate realistic article URLs based on common URL patterns
+
+Format your response as a JSON object with the following structure:
+{
+  "skills": [
+    {
+      "skillName": "Skill Name",
+      "resources": {
+        "youtube": [
+          {
+            "title": "Recommended search term or tutorial topic",
+            "searchQuery": "specific search query for YouTube",
+            "description": "What to look for in the video"
+          }
+        ],
+        "articles": [
+          {
+            "title": "Article title",
+            "url": "Direct URL to the article",
+            "source": "Platform name",
+            "description": "Brief description"
+          }
+        ]
+      }
+    }
+  ]
+}
+
+IMPORTANT INSTRUCTIONS:
+- Extract 5-8 key skills from the job description
+- For each skill, provide 2-3 YouTube search queries and 2-3 article links
+
+For YouTube:
+- Provide specific, helpful search queries (e.g., "React hooks tutorial for beginners", "JavaScript async await explained")
+
+For Articles - Generate realistic URLs using these patterns(make sure that every url dedirects to correct page on the platform):
+- GeeksforGeeks: https://www.geeksforgeeks.org/[topic-name]/ (e.g., https://www.geeksforgeeks.org/react-hooks/, https://www.geeksforgeeks.org/javascript-promises/)
+- Programiz: https://www.programiz.com/[language-or-topic]/[specific-topic] (e.g., https://www.programiz.com/dsa/getting-started, https://www.programiz.com/python-programming/function, https://www.programiz.com/java-programming/class-objects)
+- MDN Web Docs: https://developer.mozilla.org/en-US/docs/Web/[Technology]/[Topic] (e.g., https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)
+- W3Schools: https://www.w3schools.com/[technology]/[topic].asp (e.g., https://www.w3schools.com/js/js_promise.asp, https://www.w3schools.com/react/react_hooks.asp)
+- Medium: https://medium.com/[publication]/[topic-title] (e.g., https://medium.com/javascript-scene/master-the-javascript-interview-what-is-a-promise)
+- Dev.to: https://dev.to/[author]/[topic-slug] (e.g., https://dev.to/coderslang/javascript-promises-explained)
+
+CRITICAL:
+- Use lowercase and hyphens for URL slugs (e.g., "data-structures", "react-hooks", "async-await")
+- Make URLs look realistic and follow the platform's URL structure
+- Focus on commonly documented topics that these platforms actually cover
+- Return ONLY valid JSON, no markdown formatting or additional text
+
+Return the JSON object now:`;
+
+		const response = await AI.chat.completions.create({
+			model: "gemini-2.0-flash",
+			messages: [
+				{
+					role: "user",
+					content: prompt,
+				},
+			],
+			temperature: 0.7,
+			max_tokens: 4000,
+		});
+
+		let learningResources = { skills: [] };
+
+		try {
+			const content = response.choices[0].message.content.trim();
+			// Extract JSON from response (handle markdown code blocks if present)
+			const jsonMatch = content.match(/\{[\s\S]*\}/);
+			if (jsonMatch) {
+				learningResources = JSON.parse(jsonMatch[0]);
+			} else {
+				learningResources = JSON.parse(content);
+			}
+
+			// Validate structure
+			if (
+				!learningResources.skills ||
+				!Array.isArray(learningResources.skills)
+			) {
+				throw new Error("Invalid response structure");
+			}
+		} catch (parseError) {
+			console.log("Error parsing LLM response:", parseError.message);
+			// Fallback: create a basic structure
+			learningResources = {
+				skills: [
+					{
+						skillName: "General Skills",
+						resources: {
+							youtube: [],
+							articles: [],
+						},
+					},
+				],
+			};
+		}
+
+		await sql`INSERT INTO creations (user_id, prompt, content, type) VALUES (${userId}, ${`Generate learning resources for job description`}, ${JSON.stringify(
+			learningResources
+		)}, 'learning-resources')`;
+
+		if (plan !== "premium") {
+			await clerkClient.users.updateUserMetadata(userId, {
+				privateMetadata: {
+					free_usage: free_usage + 1,
+				},
+			});
+		}
+
+		res.json({ success: true, learningResources });
+	} catch (error) {
+		console.log(error.message);
+		res.json({ success: false, message: error.message });
+	}
 };

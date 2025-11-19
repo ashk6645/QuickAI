@@ -1,5 +1,6 @@
+/* eslint-disable no-unused-vars */
 import { Protect, useClerk, useUser } from '@clerk/clerk-react';
-import { Eraser, FileText, Hash, House, Image, LogOut, Scissors, SquarePen, Users, Briefcase } from 'lucide-react';
+import { Eraser, FileText, Hash, House, Image, LogOut, Scissors, SquarePen, Users, Briefcase, Book } from 'lucide-react';
 import React from 'react'
 import { NavLink } from 'react-router-dom';
 
@@ -11,7 +12,8 @@ const navItems = [
     {to: '/ai/remove-background', label: 'Remove Background', Icon: Eraser},
     {to: '/ai/remove-object', label: 'Remove Object', Icon: Scissors},
     {to: '/ai/review-resume', label: 'Review Resume', Icon: FileText},
-    {to: '/ai/job-opportunities', label: 'Job Opportunities', Icon: Briefcase},
+    {to: '/ai/job-opportunities', label: 'Job Opportunities', Icon: Briefcase },
+    {to: '/ai/learning-resources', label: 'Learning Resources', Icon: Book },
     {to: '/ai/community', label: 'Community', Icon: Users},
 ]
 
@@ -19,8 +21,8 @@ const Sidebar = ({sidebar, setSidebar}) => {
     const {user} = useUser();
     const {signOut, openUserProfile} = useClerk();
   return (
-    <div className={`w-60 h-full bg-white border-r border-gray-200 flex flex-col max-sm:absolute top-0 bottom-0 ${sidebar ? 'translate-x-0' : 'max-sm:-translate-x-full'} transition-all duration-300 ease-in-out overflow-hidden`}>
-        <div className='my-7 w-full flex-1 overflow-y-auto min-h-0'>
+    <div className={`w-60 h-full bg-white border-r border-gray-200 flex flex-col max-sm:absolute top-0 bottom-0 ${sidebar ? 'translate-x-0' : 'max-sm:-translate-x-full'} transition-all duration-300 ease-in-out`}>
+        <div className='my-4 w-full flex-1'>
             <img src={user.imageUrl} alt="User avatar" className='w-13 rounded-full mx-auto' />
             <h1 className='mt-1 text-center'>{user.fullName}</h1>
             <div className='px-6 mt-5 text-sm text-gray-600 font-medium'>

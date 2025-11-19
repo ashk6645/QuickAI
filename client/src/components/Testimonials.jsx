@@ -3,16 +3,16 @@ import { assets } from "../assets/assets";
 const Testimonials = () => {
     const dummyTestimonialData = [
         {
-            image: "https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=200",
-            name: 'John Doe',
-            title: 'Marketing Director, TechCorp',
+            image: "https://ashk.vercel.app/assets/Profile%20image-BbMLCBS4.jpeg",
+            name: 'Ashutosh Singh',
+            title: 'Content Creator',
             content: 'QuickAI has revolutionized our content workflow. The quality of the articles is outstanding, and it saves us hours of work every week.',
             rating: 4,
         },
         {
-            image: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200",
-            name: 'Jane Smith',
-            title: 'Content Creator, TechCorp',
+            image: "https://www.shrianshagarwal.in/images/personal.jpeg",
+            name: 'Shriansh Agarwal',
+            title: 'Content Developer',
             content: 'QuickAI has made our content creation process effortless. The AI tools have helped us produce high-quality content faster than ever before.',
             rating: 5,
         },
