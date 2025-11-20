@@ -328,36 +328,56 @@ First, calculate an ATS (Applicant Tracking System) Score out of 100 based on:
 - Structure and readability
 - Industry-standard best practices
 
-Then format your response EXACTLY like this:
+Then format your response EXACTLY like this using Markdown:
 
 **ATS SCORE:** [Score out of 100] - [Brief explanation of the score]
 
-**STRENGTHS:**
-• [Key strength 1]
-• [Key strength 2]
-• [Key strength 3]
+### STRENGTHS
 
-**AREAS FOR IMPROVEMENT:**
-• [Improvement 1]
-• [Improvement 2]
-• [Improvement 3]
+- [Key strength 1]
 
-**CONTENT QUALITY:**
-• [Content feedback 1]
-• [Content feedback 2]
+- [Key strength 2]
 
-**STRUCTURE & FORMAT:**
-• [Format feedback 1]
-• [Format feedback 2]
+- [Key strength 3]
 
-**OVERALL RATING:** [X/10]
+### AREAS FOR IMPROVEMENT
 
-**TOP RECOMMENDATIONS:**
-• [Action item 1]
-• [Action item 2]
-• [Action item 3]
+- [Improvement 1]
 
-Keep each bullet point to 1-2 sentences maximum. Be specific and actionable. The ATS Score should be a number between 0-100.
+- [Improvement 2]
+
+- [Improvement 3]
+
+### CONTENT QUALITY
+
+- [Content feedback 1]
+
+- [Content feedback 2]
+
+### STRUCTURE & FORMAT
+
+- [Format feedback 1]
+
+- [Format feedback 2]
+
+### OVERALL RATING
+
+[X/10]
+
+### TOP RECOMMENDATIONS
+
+- [Action item 1]
+
+- [Action item 2]
+
+- [Action item 3]
+
+IMPORTANT:
+- Use standard Markdown bullet points (hyphen space).
+- Ensure there is a blank line between every bullet point.
+- Ensure there is a blank line before every header.
+- Keep each bullet point to 1-2 sentences maximum. Be specific and actionable.
+- The ATS Score should be a number between 0-100.
 
 Resume Content:
 ${pdfData.text}`;
@@ -548,151 +568,82 @@ Format as JSON:
     console.error("searchJobs error:", error?.message || error);
     return safeJson(res, 500, { success: false, message: error?.message || "Server error" });
   }
-  
 };
 
 export const generateLearningResources = async (req, res) => {
-	try {
-		const { userId } = req.auth();
-		const { jobDescription } = req.body;
-		const plan = req.plan;
-		const free_usage = req.free_usage;
+  try {
+    const { jobDescription } = req.body ?? {};
+    const plan = req.plan ?? "free";
 
-		if (plan !== "premium" && free_usage >= 10) {
-			return res.json({
-				success: false,
-				message:
-					"You have reached your free usage limit. Upgrade to premium for more usage.",
-			});
-		}
-
-		if (!jobDescription || jobDescription.trim().length === 0) {
-			return res.json({
-				success: false,
-				message: "Job description is required.",
-			});
-		}
-
-		const prompt = `Analyze the following job description and extract the key skills and technologies required. Then, for each skill, provide learning resources.
-
-Job Description:
-${jobDescription}
-
-For each skill, provide:
-1. YouTube search queries (2-3 per skill) - Provide specific search terms that users can search on YouTube
-2. Article links from well-known educational platforms (2-3 per skill) - Generate realistic article URLs based on common URL patterns
-
-Format your response as a JSON object with the following structure:
-{
-  "skills": [
-    {
-      "skillName": "Skill Name",
-      "resources": {
-        "youtube": [
-          {
-            "title": "Recommended search term or tutorial topic",
-            "searchQuery": "specific search query for YouTube",
-            "description": "What to look for in the video"
-          }
-        ],
-        "articles": [
-          {
-            "title": "Article title",
-            "url": "Direct URL to the article",
-            "source": "Platform name",
-            "description": "Brief description"
-          }
-        ]
-      }
+    if (plan !== "premium") {
+      return safeJson(res, 403, {
+        success: false,
+        message: "This feature is only available for premium users. Upgrade to premium to use this feature.",
+      });
     }
-  ]
-}
 
-IMPORTANT INSTRUCTIONS:
-- Extract 5-8 key skills from the job description
-- For each skill, provide 2-3 YouTube search queries and 2-3 article links
+    if (!jobDescription || !jobDescription.trim()) {
+      return safeJson(res, 400, { success: false, message: "Job description is required" });
+    }
 
-For YouTube:
-- Provide specific, helpful search queries (e.g., "React hooks tutorial for beginners", "JavaScript async await explained")
+    const prompt = `Analyze the following job description and extract the top 5-7 key technical skills or technologies required.
+    
+    Job Description:
+    ${jobDescription.slice(0, 2000)}
+    
+    For each skill, provide:
+    1. The name of the skill/technology
+    2. A brief 1-sentence explanation of why it's important for this role based on the description (or general knowledge if not specified).
+    3. A specific YouTube search query to learn this skill.
+    4. A specific, high-quality URL to an article, documentation, or tutorial website that teaches this skill (e.g., official docs, freeCodeCamp, MDN, GeeksforGeeks, etc.). Ensure the URL is valid and points to a real page.
 
-For Articles - Generate realistic URLs using these patterns(make sure that every url dedirects to correct page on the platform):
-- GeeksforGeeks: https://www.geeksforgeeks.org/[topic-name]/ (e.g., https://www.geeksforgeeks.org/react-hooks/, https://www.geeksforgeeks.org/javascript-promises/)
-- Programiz: https://www.programiz.com/[language-or-topic]/[specific-topic] (e.g., https://www.programiz.com/dsa/getting-started, https://www.programiz.com/python-programming/function, https://www.programiz.com/java-programming/class-objects)
-- MDN Web Docs: https://developer.mozilla.org/en-US/docs/Web/[Technology]/[Topic] (e.g., https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)
-- W3Schools: https://www.w3schools.com/[technology]/[topic].asp (e.g., https://www.w3schools.com/js/js_promise.asp, https://www.w3schools.com/react/react_hooks.asp)
-- Medium: https://medium.com/[publication]/[topic-title] (e.g., https://medium.com/javascript-scene/master-the-javascript-interview-what-is-a-promise)
-- Dev.to: https://dev.to/[author]/[topic-slug] (e.g., https://dev.to/coderslang/javascript-promises-explained)
+    Format the output as a JSON array of objects:
+    [
+      {
+        "skill": "React.js",
+        "importance": "Required for building the frontend user interface.",
+        "youtubeQuery": "React.js crash course for beginners 2024",
+        "articleUrl": "https://react.dev/learn"
+      }
+    ]
+    
+    Return ONLY the JSON array.`;
 
-CRITICAL:
-- Use lowercase and hyphens for URL slugs (e.g., "data-structures", "react-hooks", "async-await")
-- Make URLs look realistic and follow the platform's URL structure
-- Focus on commonly documented topics that these platforms actually cover
-- Return ONLY valid JSON, no markdown formatting or additional text
+    const llmResp = await callLLM({ prompt, temperature: 0.7, max_tokens: 800 });
 
-Return the JSON object now:`;
+    let resources = [];
+    try {
+      const jsonMatch = llmResp.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        resources = JSON.parse(jsonMatch[0]);
+      } else {
+        resources = JSON.parse(llmResp);
+      }
+    } catch (e) {
+      console.error("Failed to parse learning resources JSON:", e);
+      // Fallback or empty array
+    }
 
-		const response = await AI.chat.completions.create({
-			model: "gemini-2.0-flash",
-			messages: [
-				{
-					role: "user",
-					content: prompt,
-				},
-			],
-			temperature: 0.7,
-			max_tokens: 4000,
-		});
+    // Enhance resources with actual links (generated on server to ensure consistency)
+    const enhancedResources = resources.map(r => ({
+      ...r,
+      youtubeLink: `https://www.youtube.com/results?search_query=${encodeURIComponent(r.youtubeQuery)}`,
+      articleLink: r.articleUrl || `https://www.google.com/search?q=${encodeURIComponent(r.skill + " tutorial")}` // Fallback to google search if no URL
+    }));
 
-		let learningResources = { skills: [] };
+    // Save to database
+    const userId = req.userId;
+    await insertCreation({
+      userId,
+      prompt: jobDescription.slice(0, 100) + (jobDescription.length > 100 ? "..." : ""),
+      content: JSON.stringify(enhancedResources),
+      type: "learning-resources",
+    });
 
-		try {
-			const content = response.choices[0].message.content.trim();
-			// Extract JSON from response (handle markdown code blocks if present)
-			const jsonMatch = content.match(/\{[\s\S]*\}/);
-			if (jsonMatch) {
-				learningResources = JSON.parse(jsonMatch[0]);
-			} else {
-				learningResources = JSON.parse(content);
-			}
+    return safeJson(res, 200, { success: true, resources: enhancedResources });
 
-			// Validate structure
-			if (
-				!learningResources.skills ||
-				!Array.isArray(learningResources.skills)
-			) {
-				throw new Error("Invalid response structure");
-			}
-		} catch (parseError) {
-			console.log("Error parsing LLM response:", parseError.message);
-			// Fallback: create a basic structure
-			learningResources = {
-				skills: [
-					{
-						skillName: "General Skills",
-						resources: {
-							youtube: [],
-							articles: [],
-						},
-					},
-				],
-			};
-		}
-
-		await sql`INSERT INTO creations (user_id, prompt, content, type) VALUES (${userId}, ${`Generate learning resources for job description`}, ${JSON.stringify(
-			learningResources
-		)}, 'learning-resources')`;
-
-		if (plan !== "premium") {
-			await clerkClient.users.updateUserMetadata(userId, {
-				privateMetadata: {
-					free_usage: free_usage + 1,
-				},
-			});
-		}
-
-		res.json({ success: true, learningResources });
-	} catch (error) {
-		console.log(error.message);
-		res.json({ success: false, message: error.message });
-	}
+  } catch (error) {
+    console.error("generateLearningResources error:", error?.message || error);
+    return safeJson(res, 500, { success: false, message: error?.message || "Server error" });
+  }
 };

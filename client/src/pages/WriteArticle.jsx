@@ -67,42 +67,42 @@ Format the article in clean markdown with proper spacing.`
   }
 
   return (
-    <div className='h-full overflow-y-auto'>
-      <div className='p-6 max-w-7xl mx-auto'>
+    <div className='h-full overflow-y-auto p-6'>
+      <div className='max-w-7xl mx-auto'>
         <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
           {/* Upload Section */}
           <div className='lg:col-span-1'>
-            <div className='bg-white p-6 rounded-xl border border-gray-100 shadow-sm sticky top-6'>
+            <div className='bg-card p-6 rounded-xl border border-border shadow-sm sticky top-0'>
               <div className='flex items-center gap-3 mb-6'>
-                <div className='w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center'>
-                  <Sparkles className='w-5 h-5 text-white' />
+                <div className='w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center'>
+                  <Sparkles className='w-5 h-5 text-primary' />
                 </div>
-                <h2 className='text-lg font-semibold text-gray-900'>Article Configuration</h2>
+                <h2 className='text-lg font-semibold text-foreground'>Article Configuration</h2>
               </div>
-              
+
               <form onSubmit={onSubmitHandler} className='space-y-5'>
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 mb-2'>Article Topic</label>
-                  <input 
-                    onChange={(e) => setInput(e.target.value)} 
-                    value={input} 
-                    type="text" 
-                    className='w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition' 
-                    placeholder='The Future of artificial intelligence is...' 
-                    required 
+                  <label className='block text-sm font-medium text-foreground mb-2'>Article Topic</label>
+                  <input
+                    onChange={(e) => setInput(e.target.value)}
+                    value={input}
+                    type="text"
+                    className='w-full px-4 py-2.5 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-foreground placeholder:text-muted-foreground'
+                    placeholder='The Future of artificial intelligence is...'
+                    required
                   />
                 </div>
-                
+
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 mb-2'>Article Length</label>
+                  <label className='block text-sm font-medium text-foreground mb-2'>Article Length</label>
                   <div className='flex flex-wrap gap-2'>
                     {articleLength.map((item, index) => (
                       <button
                         type="button"
                         onClick={() => setSelectedLength(item)}
-                        className={`px-3 py-1.5 text-sm rounded-full border transition ${selectedLength.text === item.text 
-                          ? 'bg-blue-100 text-blue-700 border-blue-200' 
-                          : 'text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+                        className={`px-3 py-1.5 text-sm rounded-full border transition ${selectedLength.text === item.text
+                          ? 'bg-primary/10 text-primary border-primary/20'
+                          : 'text-muted-foreground border-border hover:bg-secondary hover:text-foreground'}`}
                         key={index}
                       >
                         {item.text}
@@ -110,11 +110,11 @@ Format the article in clean markdown with proper spacing.`
                     ))}
                   </div>
                 </div>
-                
-                <button 
+
+                <button
                   type="submit"
-                  disabled={loading} 
-                  className='w-full flex justify-center items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-3 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 transition disabled:opacity-70 disabled:cursor-not-allowed'
+                  disabled={loading}
+                  className='w-full flex justify-center items-center gap-2 bg-primary text-primary-foreground px-4 py-3 rounded-lg font-medium hover:bg-primary/90 transition disabled:opacity-70 disabled:cursor-not-allowed shadow-lg shadow-primary/20'
                 >
                   {loading ? (
                     <span className='w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin'></span>
@@ -131,45 +131,46 @@ Format the article in clean markdown with proper spacing.`
 
           {/* Output Section */}
           <div className='lg:col-span-2'>
-            <div className='bg-white p-6 rounded-xl border border-gray-100 shadow-sm'>
-              <div className='flex items-center justify-between mb-6'>
+            <div className='bg-card p-6 rounded-xl border border-border shadow-sm h-[calc(100vh-8rem)] flex flex-col'>
+              <div className='flex items-center justify-between mb-6 flex-shrink-0'>
                 <div className='flex items-center gap-3'>
-                  <div className='w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center'>
-                    <Edit className='w-5 h-5 text-gray-600' />
+                  <div className='w-10 h-10 rounded-lg bg-secondary flex items-center justify-center'>
+                    <Edit className='w-5 h-5 text-muted-foreground' />
                   </div>
-                  <h2 className='text-lg font-semibold text-gray-900'>Generated Article</h2>
+                  <h2 className='text-lg font-semibold text-foreground'>Generated Article</h2>
                 </div>
                 {content && <ActionButtons content={content} type="markdown" filename={`article-${Date.now()}`} />}
               </div>
-              
-              <div className='h-[450px] overflow-auto'>
+
+              <div className='flex-1 overflow-y-auto pr-2 custom-scrollbar'>
                 {!content ? (
-                  <div className='flex flex-col justify-center items-center text-center py-16'>
-                    <div className='w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4'>
-                      <Edit className='w-8 h-8 text-gray-400' />
+                  <div className='h-full flex flex-col justify-center items-center text-center py-16 opacity-50'>
+                    <div className='w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4'>
+                      <Edit className='w-8 h-8 text-muted-foreground' />
                     </div>
-                    <p className='text-gray-500 max-w-xs'>Enter a topic and click "Generate Article" to get started</p>
+                    <p className='text-muted-foreground max-w-xs'>Enter a topic and click "Generate Article" to get started</p>
                   </div>
                 ) : (
-                  <div className='px-4 py-3'>
-              <Markdown
-                remarkPlugins={[remarkGfm]}
-                components={{
-                  h1: ({children}) => <h1 className='text-3xl font-bold text-gray-900 mb-6 mt-8 border-b-2 border-gray-200 pb-3'>{children}</h1>,
-                  h2: ({children}) => <h2 className='text-2xl font-bold text-gray-800 mb-4 mt-6'>{children}</h2>,
-                  h3: ({children}) => <h3 className='text-xl font-semibold text-gray-700 mb-3 mt-5'>{children}</h3>,
-                  h4: ({children}) => <h4 className='text-lg font-semibold text-gray-700 mb-2 mt-4'>{children}</h4>,
-                  p: ({children}) => <p className='text-gray-700 mb-4 leading-7 text-base'>{children}</p>,
-                  ul: ({children}) => <ul className='list-disc ml-8 mb-4 space-y-2'>{children}</ul>,
-                  ol: ({children}) => <ol className='list-decimal ml-8 mb-4 space-y-2'>{children}</ol>,
-                  li: ({children}) => <li className='text-gray-700 leading-7'>{children}</li>,
-                  strong: ({children}) => <strong className='font-bold text-gray-900'>{children}</strong>,
-                  em: ({children}) => <em className='italic text-gray-600'>{children}</em>,
-                  blockquote: ({children}) => <blockquote className='border-l-4 border-blue-500 pl-4 italic text-gray-600 my-4 bg-blue-50 py-2'>{children}</blockquote>,
-                }}
-              >
-                {content}
-              </Markdown>
+                  <div className='px-4 py-3 prose prose-slate max-w-none dark:prose-invert'>
+                    <Markdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        h1: ({ children }) => <h1 className='text-3xl font-bold text-foreground mb-6 mt-8 border-b border-border pb-3'>{children}</h1>,
+                        h2: ({ children }) => <h2 className='text-2xl font-bold text-foreground mb-4 mt-6'>{children}</h2>,
+                        h3: ({ children }) => <h3 className='text-xl font-semibold text-foreground mb-3 mt-5'>{children}</h3>,
+                        h4: ({ children }) => <h4 className='text-lg font-semibold text-foreground mb-2 mt-4'>{children}</h4>,
+                        p: ({ children }) => <p className='text-muted-foreground mb-4 leading-7 text-base'>{children}</p>,
+                        ul: ({ children }) => <ul className='list-disc ml-8 mb-4 space-y-2 text-muted-foreground'>{children}</ul>,
+                        ol: ({ children }) => <ol className='list-decimal ml-8 mb-4 space-y-2 text-muted-foreground'>{children}</ol>,
+                        li: ({ children }) => <li className='leading-7'>{children}</li>,
+                        strong: ({ children }) => <strong className='font-bold text-foreground'>{children}</strong>,
+                        em: ({ children }) => <em className='italic text-muted-foreground'>{children}</em>,
+                        blockquote: ({ children }) => <blockquote className='border-l-4 border-primary/50 pl-4 italic text-muted-foreground my-4 bg-secondary/30 py-2 rounded-r-lg'>{children}</blockquote>,
+                        code: ({ children }) => <code className='bg-secondary px-1.5 py-0.5 rounded text-sm font-mono text-primary'>{children}</code>,
+                      }}
+                    >
+                      {content}
+                    </Markdown>
                   </div>
                 )}
               </div>
@@ -180,4 +181,5 @@ Format the article in clean markdown with proper spacing.`
     </div>
   )
 }
+
 export default WriteArticle

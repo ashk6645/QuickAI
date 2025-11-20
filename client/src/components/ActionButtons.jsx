@@ -1,6 +1,7 @@
 import { Check, Copy, Download } from 'lucide-react'
 import React, { useState } from 'react'
 import toast from 'react-hot-toast'
+import { jsPDF } from 'jspdf'
 
 export const CopyButton = ({ text, className = '' }) => {
   const [copied, setCopied] = useState(false)
@@ -19,18 +20,18 @@ export const CopyButton = ({ text, className = '' }) => {
   return (
     <button
       onClick={handleCopy}
-      className={`flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition ${className}`}
+      className={`flex items-center gap-2 px-3 py-1.5 border border-border rounded-md hover:bg-secondary transition-colors text-sm font-medium text-muted-foreground hover:text-foreground ${className}`}
       title="Copy to clipboard"
     >
       {copied ? (
         <>
-          <Check className='w-4 h-4 text-green-600' />
-          <span className='text-sm text-green-600'>Copied!</span>
+          <Check className='w-4 h-4 text-green-500' />
+          <span className='text-green-500'>Copied!</span>
         </>
       ) : (
         <>
-          <Copy className='w-4 h-4 text-gray-600' />
-          <span className='text-sm text-gray-700'>Copy</span>
+          <Copy className='w-4 h-4' />
+          <span>Copy</span>
         </>
       )}
     </button>
@@ -40,16 +41,9 @@ export const CopyButton = ({ text, className = '' }) => {
 export const DownloadButton = ({ content, filename, type = 'text', className = '' }) => {
   const handleDownload = () => {
     try {
-      let blob
       let downloadFilename = filename || `quickai-${Date.now()}`
 
-      if (type === 'text') {
-        blob = new Blob([content], { type: 'text/plain' })
-        downloadFilename += '.txt'
-      } else if (type === 'markdown') {
-        blob = new Blob([content], { type: 'text/markdown' })
-        downloadFilename += '.md'
-      } else if (type === 'image') {
+      if (type === 'image') {
         // For image URLs, we'll fetch and download
         fetch(content)
           .then(res => res.blob())
@@ -66,14 +60,82 @@ export const DownloadButton = ({ content, filename, type = 'text', className = '
         return
       }
 
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = downloadFilename
-      a.click()
-      window.URL.revokeObjectURL(url)
-      toast.success('Downloaded successfully!')
-    } catch {
+      // For text and markdown, generate PDF
+      if (type === 'text' || type === 'markdown') {
+        const doc = new jsPDF()
+
+        const pageWidth = doc.internal.pageSize.getWidth()
+        const pageHeight = doc.internal.pageSize.getHeight()
+        const margin = 20
+        const maxLineWidth = pageWidth - (margin * 2)
+
+        let cursorY = 20
+
+        // Helper to add text and handle page breaks
+        const addText = (text, fontSize = 12, isBold = false) => {
+          doc.setFontSize(fontSize)
+          doc.setFont("helvetica", isBold ? "bold" : "normal")
+
+          const lines = doc.splitTextToSize(text, maxLineWidth)
+
+          lines.forEach(line => {
+            if (cursorY + fontSize / 2 > pageHeight - margin) {
+              doc.addPage()
+              cursorY = 20
+            }
+            doc.text(line, margin, cursorY)
+            cursorY += (fontSize / 2) + 2 // Line height based on font size
+          })
+
+          cursorY += 2 // Extra spacing after block
+        }
+
+        const lines = content.split('\n')
+
+        lines.forEach(line => {
+          const trimmedLine = line.trim()
+
+          if (!trimmedLine) {
+            cursorY += 5 // Paragraph spacing
+            return
+          }
+
+          // Handle Headers
+          if (trimmedLine.startsWith('# ')) {
+            addText(trimmedLine.replace(/^#\s+/, ''), 24, true)
+          } else if (trimmedLine.startsWith('## ')) {
+            addText(trimmedLine.replace(/^##\s+/, ''), 20, true)
+          } else if (trimmedLine.startsWith('### ')) {
+            addText(trimmedLine.replace(/^###\s+/, ''), 16, true)
+          } else if (trimmedLine.startsWith('#### ')) {
+            addText(trimmedLine.replace(/^####\s+/, ''), 14, true)
+          }
+          // Handle Bullets
+          else if (trimmedLine.startsWith('- ') || trimmedLine.startsWith('* ')) {
+            // Clean bold syntax **text** to just text for now
+            const cleanLine = trimmedLine.replace(/^[-*]\s+/, '• ').replace(/\*\*/g, '')
+            addText(cleanLine, 12, false)
+          }
+          // Handle Numbered Lists
+          else if (/^\d+\.\s/.test(trimmedLine)) {
+            const cleanLine = trimmedLine.replace(/\*\*/g, '')
+            addText(cleanLine, 12, false)
+          }
+          // Regular Text
+          else {
+            // Clean bold syntax **text** to just text
+            const cleanLine = trimmedLine.replace(/\*\*/g, '')
+            addText(cleanLine, 12, false)
+          }
+        })
+
+        doc.save(downloadFilename + '.pdf')
+        toast.success('PDF downloaded successfully!')
+        return
+      }
+
+    } catch (error) {
+      console.error(error)
       toast.error('Failed to download')
     }
   }
@@ -81,11 +143,11 @@ export const DownloadButton = ({ content, filename, type = 'text', className = '
   return (
     <button
       onClick={handleDownload}
-      className={`flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition ${className}`}
-      title="Download"
+      className={`flex items-center gap-2 px-3 py-1.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors text-sm font-medium ${className}`}
+      title="Download as PDF"
     >
       <Download className='w-4 h-4' />
-      <span className='text-sm'>Download</span>
+      <span>Download PDF</span>
     </button>
   )
 }

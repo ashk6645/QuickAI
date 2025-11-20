@@ -10,37 +10,36 @@ import RemoveBackground from "./pages/RemoveBackground.jsx";
 import RemoveObject from "./pages/RemoveObject.jsx";
 import ReviewResume from "./pages/ReviewResume.jsx";
 import JobOpportunities from "./pages/JobOpportunities.jsx";
+import LearningResources from "./pages/LearningResources.jsx";
 import Community from "./pages/Community.jsx";
 import NotFound from "./pages/NotFound.jsx";
 import { Toaster } from "react-hot-toast";
-import LearningResources from "./pages/LearningResources.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
-
+import { ThemeProvider } from './context/ThemeContext';
 
 const App = () => {
-
   return (
-    <ErrorBoundary>
-      <div>
+    <ThemeProvider>
+      <ErrorBoundary>
         <Toaster position="top-right" />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/ai" element={<Layout />}>
             <Route index element={<Dashboard />} />
             <Route path="write-article" element={<WriteArticle />} />
-            <Route path="blog-titles" element={<BlogTitles/>} />
-            <Route path="generate-images" element={<GenerateImages/>} />
-            <Route path="remove-background" element={<RemoveBackground/>} />
-            <Route path="remove-object" element={<RemoveObject/>} />
-            <Route path="review-resume" element={<ReviewResume/>} />
-            <Route path="job-opportunities" element={<JobOpportunities/>} />
-            <Route path="learning-resources" element={<LearningResources/>} />
-            <Route path="community" element={<Community/>} />
+            <Route path="blog-titles" element={<BlogTitles />} />
+            <Route path="generate-images" element={<GenerateImages />} />
+            <Route path="remove-background" element={<RemoveBackground />} />
+            <Route path="remove-object" element={<RemoveObject />} />
+            <Route path="review-resume" element={<ReviewResume />} />
+            <Route path="job-opportunities" element={<JobOpportunities />} />
+            <Route path="learning-resources" element={<LearningResources />} />
+            <Route path="community" element={<Community />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </div>
-    </ErrorBoundary>
+      </ErrorBoundary>
+    </ThemeProvider>
   );
 };
 

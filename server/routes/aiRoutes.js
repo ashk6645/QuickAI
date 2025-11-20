@@ -13,6 +13,6 @@ aiRouter.post('/remove-image-object', upload.single('image'), auth, removeImageO
 aiRouter.post('/resume-review', upload.single('resume'), auth, resumeReview)
 aiRouter.post('/find-job-opportunities', upload.single('resume'), auth, findJobOpportunities)
 aiRouter.post('/search-jobs', auth, searchJobs)
-aiRouter.post("/generate-learning-resources", auth, generateLearningResources)
+aiRouter.post('/generate-learning-resources', auth, generateLearningResources)
 
 export default aiRouter

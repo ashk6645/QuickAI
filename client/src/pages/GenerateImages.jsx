@@ -9,7 +9,7 @@ axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
 
 const GenerateImages = () => {
   const imageStyle = [
-    'Realistic','Portrait Style', 'Ghibli style', 'Fantasy style', '3D Style', 'Cartoon' 
+    'Realistic', 'Cartoon', 'Ghibli style', 'Anime Style', 'Cartoon style', 'Fantasy style', '3D Style', 'Portrait Style'
   ]
 
   const [selectedStyle, setSelectedStyle] = useState('Realistic')
@@ -50,37 +50,37 @@ const GenerateImages = () => {
         <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
           {/* Upload Section */}
           <div className='lg:col-span-1'>
-            <div className='bg-white p-6 rounded-xl border border-gray-100 shadow-sm sticky top-6'>
+            <div className='bg-card p-6 rounded-xl border border-border shadow-sm sticky top-0'>
               <div className='flex items-center gap-3 mb-6'>
-                <div className='w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-teal-500 flex items-center justify-center'>
-                  <Sparkles className='w-5 h-5 text-white' />
+                <div className='w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center'>
+                  <Sparkles className='w-5 h-5 text-primary' />
                 </div>
-                <h2 className='text-lg font-semibold text-gray-900'>Image Configuration</h2>
+                <h2 className='text-lg font-semibold text-foreground'>Image Configuration</h2>
               </div>
-              
+
               <form onSubmit={onSubmitHandler} className='space-y-5'>
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 mb-2'>Image Description</label>
-                  <textarea 
-                    onChange={(e) => setInput(e.target.value)} 
-                    value={input} 
-                    rows={4} 
-                    className='w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition' 
-                    placeholder='Describe what you want to see in the image...' 
-                    required 
+                  <label className='block text-sm font-medium text-foreground mb-2'>Image Description</label>
+                  <textarea
+                    onChange={(e) => setInput(e.target.value)}
+                    value={input}
+                    rows={4}
+                    className='w-full px-4 py-2.5 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-foreground placeholder:text-muted-foreground resize-none'
+                    placeholder='Describe what you want to see in the image...'
+                    required
                   />
                 </div>
-                
+
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 mb-2'>Style</label>
+                  <label className='block text-sm font-medium text-foreground mb-2'>Style</label>
                   <div className='flex flex-wrap gap-2'>
                     {imageStyle.map((item) => (
                       <button
                         type="button"
                         onClick={() => setSelectedStyle(item)}
-                        className={`px-3 py-1.5 text-sm rounded-full border transition ${selectedStyle === item 
-                          ? 'bg-green-100 text-green-700 border-green-200' 
-                          : 'text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+                        className={`px-3 py-1.5 text-sm rounded-full border transition ${selectedStyle === item
+                          ? 'bg-primary/10 text-primary border-primary/20'
+                          : 'text-muted-foreground border-border hover:bg-secondary hover:text-foreground'}`}
                         key={item}
                       >
                         {item}
@@ -88,24 +88,24 @@ const GenerateImages = () => {
                     ))}
                   </div>
                 </div>
-                
+
                 <div className='flex items-center gap-3'>
                   <label className="relative inline-flex items-center cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      onChange={(e) => setPublish(e.target.checked)} 
-                      checked={publish} 
-                      className="sr-only peer" 
+                    <input
+                      type="checkbox"
+                      onChange={(e) => setPublish(e.target.checked)}
+                      checked={publish}
+                      className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                    <div className="w-11 h-6 bg-secondary peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                   </label>
-                  <span className='text-sm text-gray-700'>Make this image public</span>
+                  <span className='text-sm text-foreground'>Make this image public</span>
                 </div>
-                
-                <button 
+
+                <button
                   type="submit"
-                  disabled={loading} 
-                  className='w-full flex justify-center items-center gap-2 bg-gradient-to-r from-green-600 to-teal-600 text-white px-4 py-3 rounded-lg font-medium hover:from-green-700 hover:to-teal-700 transition disabled:opacity-70 disabled:cursor-not-allowed'
+                  disabled={loading}
+                  className='w-full flex justify-center items-center gap-2 bg-primary text-primary-foreground px-4 py-3 rounded-lg font-medium hover:bg-primary/90 transition disabled:opacity-70 disabled:cursor-not-allowed shadow-lg shadow-primary/20'
                 >
                   {loading ? (
                     <span className='w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin'></span>
@@ -122,27 +122,27 @@ const GenerateImages = () => {
 
           {/* Output Section */}
           <div className='lg:col-span-2'>
-            <div className='bg-white p-6 rounded-xl border border-gray-100 shadow-sm'>
-              <div className='flex items-center justify-between mb-6'>
+            <div className='bg-card p-6 rounded-xl border border-border shadow-sm h-[calc(100vh-8rem)] flex flex-col'>
+              <div className='flex items-center justify-between mb-6 flex-shrink-0'>
                 <div className='flex items-center gap-3'>
-                  <div className='w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center'>
-                    <Image className='w-5 h-5 text-gray-600' />
+                  <div className='w-10 h-10 rounded-lg bg-secondary flex items-center justify-center'>
+                    <Image className='w-5 h-5 text-muted-foreground' />
                   </div>
-                  <h2 className='text-lg font-semibold text-gray-900'>Generated Image</h2>
+                  <h2 className='text-lg font-semibold text-foreground'>Generated Image</h2>
                 </div>
                 {content && <ActionButtons content={content} type="image" filename={`quickai-image-${Date.now()}`} />}
               </div>
-              
-              <div className='h-[450px] overflow-auto flex items-center justify-center'>
+
+              <div className='flex-1 overflow-y-auto pr-2 custom-scrollbar flex items-center justify-center bg-secondary/20 rounded-lg'>
                 {!content ? (
-                  <div className='flex flex-col justify-center items-center text-center py-16'>
-                    <div className='w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4'>
-                      <Image className='w-8 h-8 text-gray-400' />
+                  <div className='h-full flex flex-col justify-center items-center text-center py-16 opacity-50'>
+                    <div className='w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4'>
+                      <Image className='w-8 h-8 text-muted-foreground' />
                     </div>
-                    <p className='text-gray-500 max-w-xs'>Enter a description and click "Generate Image" to get started</p>
+                    <p className='text-muted-foreground max-w-xs'>Enter a description and click "Generate Image" to get started</p>
                   </div>
                 ) : (
-                  <img src={content} alt="Generated content" className='max-h-full rounded-lg object-contain' />
+                  <img src={content} alt="Generated content" className='max-w-full max-h-full rounded-lg object-contain shadow-sm' />
                 )}
               </div>
             </div>

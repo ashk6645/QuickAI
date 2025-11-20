@@ -4,6 +4,7 @@ import {
   Briefcase,
   ExternalLink,
   Sparkles,
+  Upload
 } from "lucide-react";
 import React, { useState } from "react";
 import axios from "axios";
@@ -86,8 +87,8 @@ const JobOpportunities = () => {
       console.error("Error searching jobs:", error);
       toast.error(
         error.response?.data?.message ||
-          error.message ||
-          "Failed to search jobs"
+        error.message ||
+        "Failed to search jobs"
       );
     } finally {
       setSearchingJob(null);
@@ -95,39 +96,39 @@ const JobOpportunities = () => {
   };
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="p-6 max-w-7xl mx-auto">
+    <div className="h-full overflow-y-auto p-6">
+      <div className="max-w-7xl mx-auto">
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Upload Section */}
           <div className="lg:col-span-1">
-            <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm sticky top-6">
+            <div className="bg-card p-6 rounded-xl border border-border shadow-sm sticky top-0">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-white" />
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-primary" />
                 </div>
-                <h2 className="text-lg font-semibold text-gray-900">
+                <h2 className="text-lg font-semibold text-foreground">
                   Upload Resume
                 </h2>
               </div>
 
               <form onSubmit={onSubmitHandler} className="space-y-5">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Resume File
                   </label>
                   <div className="flex items-center justify-center w-full">
                     <label
                       htmlFor="dropzone-file"
-                      className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition"
+                      className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-border rounded-lg cursor-pointer bg-secondary/30 hover:bg-secondary transition"
                     >
                       <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <FileText className="w-8 h-8 mb-3 text-gray-400" />
-                        <p className="mb-2 text-sm text-gray-500">
-                          <span className="font-semibold">Click to upload</span>{" "}
+                        <Upload className="w-8 h-8 mb-3 text-muted-foreground" />
+                        <p className="mb-2 text-sm text-muted-foreground">
+                          <span className="font-semibold text-foreground">Click to upload</span>{" "}
                           or drag and drop
                         </p>
-                        <p className="text-xs text-gray-500">PDF (MAX. 5MB)</p>
+                        <p className="text-xs text-muted-foreground">PDF (MAX. 5MB)</p>
                       </div>
                       <input
                         id="dropzone-file"
@@ -142,9 +143,9 @@ const JobOpportunities = () => {
                 </div>
 
                 {fileName && (
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <p className="text-sm text-gray-700 truncate flex items-center gap-2">
-                      <FileText className="w-4 h-4 flex-shrink-0" />
+                  <div className="bg-secondary/30 p-3 rounded-lg border border-border">
+                    <p className="text-sm text-foreground truncate flex items-center gap-2">
+                      <FileText className="w-4 h-4 flex-shrink-0 text-primary" />
                       <span className="truncate">{fileName}</span>
                     </p>
                   </div>
@@ -153,7 +154,7 @@ const JobOpportunities = () => {
                 <button
                   type="submit"
                   disabled={loading || !resume}
-                  className="w-full flex justify-center items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-3 rounded-lg font-medium hover:from-purple-700 hover:to-pink-700 transition disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="w-full flex justify-center items-center gap-2 bg-primary text-primary-foreground px-4 py-3 rounded-lg font-medium hover:bg-primary/90 transition disabled:opacity-70 disabled:cursor-not-allowed shadow-lg shadow-primary/20"
                 >
                   {loading ? (
                     <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
@@ -170,23 +171,23 @@ const JobOpportunities = () => {
 
           {/* Job Opportunities Section */}
           <div className="lg:col-span-2">
-            <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
-                  <Briefcase className="w-5 h-5 text-gray-600" />
+            <div className="bg-card p-6 rounded-xl border border-border shadow-sm h-[calc(100vh-8rem)] flex flex-col">
+              <div className="flex items-center gap-3 mb-6 flex-shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center">
+                  <Briefcase className="w-5 h-5 text-muted-foreground" />
                 </div>
-                <h2 className="text-lg font-semibold text-gray-900">
+                <h2 className="text-lg font-semibold text-foreground">
                   Suggested Job Roles
                 </h2>
               </div>
 
-              <div className="h-[450px] overflow-scroll">
+              <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
                 {jobTitles.length === 0 ? (
-                  <div className="flex flex-col justify-center items-center text-center py-16">
-                    <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                      <Briefcase className="w-8 h-8 text-gray-400" />
+                  <div className="h-full flex flex-col justify-center items-center text-center py-16 opacity-50">
+                    <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4">
+                      <Briefcase className="w-8 h-8 text-muted-foreground" />
                     </div>
-                    <p className="text-gray-500 max-w-xs">
+                    <p className="text-muted-foreground max-w-xs">
                       Upload your resume and click "Find Opportunities" to
                       discover relevant job roles
                     </p>
@@ -200,20 +201,20 @@ const JobOpportunities = () => {
                       return (
                         <div
                           key={index}
-                          className="border border-gray-200 rounded-lg p-4 hover:border-purple-300 hover:shadow-md transition"
+                          className="border border-border rounded-lg p-4 hover:border-primary/50 hover:shadow-md transition bg-card"
                         >
                           <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-                            <h3 className="text-lg font-medium text-gray-900 flex-1 min-w-[200px]">
+                            <h3 className="text-lg font-medium text-foreground flex-1 min-w-[200px]">
                               {jobTitle}
                             </h3>
                             <button
                               onClick={() => handleSearchJob(jobTitle)}
                               disabled={isSearching}
-                              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-medium hover:from-purple-700 hover:to-pink-700 transition disabled:opacity-70 disabled:cursor-not-allowed text-sm whitespace-nowrap"
+                              className="flex items-center gap-2 px-4 py-2 bg-secondary text-foreground rounded-lg font-medium hover:bg-secondary/80 transition disabled:opacity-70 disabled:cursor-not-allowed text-sm whitespace-nowrap border border-border"
                             >
                               {isSearching ? (
                                 <>
-                                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                  <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
                                   Searching...
                                 </>
                               ) : (
@@ -228,10 +229,10 @@ const JobOpportunities = () => {
                           </div>
 
                           {searchData && searchData.searchUrls && (
-                            <div className="mt-4 pt-4 border-t border-gray-200 animate-in fade-in duration-300">
+                            <div className="mt-4 pt-4 border-t border-border animate-in fade-in duration-300">
                               {searchData.keywords && (
-                                <p className="text-sm text-gray-600 mb-3">
-                                  <strong>Keywords:</strong>{" "}
+                                <p className="text-sm text-muted-foreground mb-3">
+                                  <strong className="text-foreground">Keywords:</strong>{" "}
                                   {searchData.keywords}
                                 </p>
                               )}
@@ -241,7 +242,7 @@ const JobOpportunities = () => {
                                     href={searchData.searchUrls.indeed}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition text-sm font-medium shadow-sm hover:shadow-md"
+                                    className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition text-sm font-medium shadow-sm hover:shadow-md border border-blue-100"
                                   >
                                     <ExternalLink className="w-4 h-4" />
                                     Indeed
@@ -252,7 +253,7 @@ const JobOpportunities = () => {
                                     href={searchData.searchUrls.linkedin}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition text-sm font-medium shadow-sm hover:shadow-md"
+                                    className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition text-sm font-medium shadow-sm hover:shadow-md border border-blue-100"
                                   >
                                     <ExternalLink className="w-4 h-4" />
                                     LinkedIn
@@ -263,7 +264,7 @@ const JobOpportunities = () => {
                                     href={searchData.searchUrls.glassdoor}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition text-sm font-medium shadow-sm hover:shadow-md"
+                                    className="flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition text-sm font-medium shadow-sm hover:shadow-md border border-green-100"
                                   >
                                     <ExternalLink className="w-4 h-4" />
                                     Glassdoor
@@ -274,7 +275,7 @@ const JobOpportunities = () => {
                                     href={searchData.searchUrls.internshala}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition text-sm font-medium shadow-sm hover:shadow-md"
+                                    className="flex items-center gap-2 px-4 py-2 bg-sky-50 text-sky-700 rounded-lg hover:bg-sky-100 transition text-sm font-medium shadow-sm hover:shadow-md border border-sky-100"
                                   >
                                     <ExternalLink className="w-4 h-4" />
                                     Internshala
@@ -285,7 +286,7 @@ const JobOpportunities = () => {
                                     href={searchData.searchUrls.naukri}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition text-sm font-medium shadow-sm hover:shadow-md"
+                                    className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition text-sm font-medium shadow-sm hover:shadow-md border border-indigo-100"
                                   >
                                     <ExternalLink className="w-4 h-4" />
                                     Naukri

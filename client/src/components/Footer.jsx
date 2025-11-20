@@ -2,42 +2,51 @@ import React from 'react'
 import { assets } from '../assets/assets'
 
 const Footer = () => {
-  return (
-    <footer className="px-6 md:px-16 lg:px-24 xl:px-32 pt-8 w-full text-gray-500 mt-20">
-    <div className="flex flex-col md:flex-row justify-between w-full gap-10 border-b border-gray-500/30 pb-6">
-        <div className="md:max-w-96">
-            <img className="h-9" src={assets.logo} alt="logo"/>
-            <p className="mt-6 text-sm">
-                Experience the Power of AI with QuickAI. <br /> Transform your content creation with our suite of premium AI tools. Write articles, generate images, and enhance your workflow.
-            </p>
-        </div>
-        <div className="flex-1 flex items-start md:justify-end gap-20">
-            <div>
-                <h2 className="font-semibold mb-5 text-gray-800">Company</h2>
-                <ul className="text-sm space-y-2">
-                    <li><a href="#">Home</a></li>
-                    <li><a href="#">About us</a></li>
-                    <li><a href="#">Contact us</a></li>
-                    <li><a href="#">Privacy policy</a></li>
-                </ul>
-            </div>
-            <div>
-                <h2 className="font-semibold text-gray-800 mb-5">Subscribe to our newsletter</h2>
-                <div className="text-sm space-y-2">
-                    <p>The latest news, articles, and resources, sent to your inbox weekly.</p>
-                    <div className="flex items-center gap-2 pt-4">
-                        <input className="border border-gray-500/30 placeholder-gray-500 focus:ring-2 ring-indigo-600 outline-none w-full max-w-64 h-9 rounded px-2" type="email" placeholder="Enter your email"/>
-                        <button className="bg-primary w-24 h-9 text-white rounded cursor-pointer">Subscribe</button>
+    return (
+        <footer className="bg-background border-t border-border pt-16 pb-8 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+                    <div className="lg:col-span-1">
+                        <img className="h-8 mb-6" src={assets.logo} alt="QuickAI" />
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                            Experience the Power of AI with QuickAI. Transform your content creation with our suite of premium AI tools.
+                        </p>
+                    </div>
+
+                    <div>
+                        <h3 className="font-semibold text-foreground mb-6">Company</h3>
+                        <ul className="space-y-4 text-sm text-muted-foreground">
+                            <li><a href="#" className="hover:text-primary transition-colors">Home</a></li>
+                            <li><a href="#" className="hover:text-primary transition-colors">About us</a></li>
+                            <li><a href="#" className="hover:text-primary transition-colors">Contact us</a></li>
+                            <li><a href="#" className="hover:text-primary transition-colors">Privacy policy</a></li>
+                        </ul>
+                    </div>
+
+                    <div className="lg:col-span-2">
+                        <h3 className="font-semibold text-foreground mb-6">Subscribe to our newsletter</h3>
+                        <p className="text-sm text-muted-foreground mb-4">The latest news, articles, and resources, sent to your inbox weekly.</p>
+                        <div className="flex gap-2 max-w-md">
+                            <input
+                                className="flex-1 bg-secondary border border-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                                type="email"
+                                placeholder="Enter your email"
+                            />
+                            <button className="bg-primary text-primary-foreground px-6 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
+                                Subscribe
+                            </button>
+                        </div>
                     </div>
                 </div>
+
+                <div className="border-t border-border pt-8 text-center">
+                    <p className="text-sm text-muted-foreground">
+                        Copyright {new Date().getFullYear()} © <a href="https://ashk.vercel.app" className="hover:text-primary transition-colors">Ashutosh</a>. All Right Reserved.
+                    </p>
+                </div>
             </div>
-        </div>
-    </div>
-    <p className="pt-4 text-center text-xs md:text-sm pb-5">
-        Copyright 2025 © <a href="https://ashk.vercel.app">Ashutosh</a>. All Right Reserved.
-    </p>
-</footer>
-  )
+        </footer>
+    )
 }
 
 export default Footer

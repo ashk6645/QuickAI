@@ -19,4 +19,4 @@ const Hone = () => {
   )
 }
 
-export default Hone
+export default Hone;
