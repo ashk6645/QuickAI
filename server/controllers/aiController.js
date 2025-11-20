@@ -1,3 +1,4 @@
+// controllers/aiController.js
 import OpenAI from "openai";
 import sql from "../configs/db.js";
 import { clerkClient } from "@clerk/express";
@@ -6,47 +7,60 @@ import { v2 as cloudinary } from "cloudinary";
 import fs from "fs/promises";
 import fsSync from "fs";
 import pdf from "pdf-parse/lib/pdf-parse.js";
-import FormData from "form-data"; // FIX: FormData import for node
+import FormData from "form-data";
 import path from "path";
 
+// --- Config & constants ---
 const AI = new OpenAI({
   apiKey: process.env.GEMINI_API_KEY,
-  baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
+  baseURL: process.env.GEMINI_BASE_URL || "https://generativelanguage.googleapis.com/v1beta/openai/",
+  // Optionally add fetch options/timeouts if supported by client
 });
 
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+const DEFAULT_FREE_LIMIT = Number(process.env.FREE_USAGE_LIMIT || 10);
+const MAX_RESUME_SIZE = Number(process.env.MAX_RESUME_SIZE || 5 * 1024 * 1024); // 5MB
+const DEFAULT_ARTICLE_TOKENS = 400;
+const DEFAULT_TIMEOUT_MS = Number(process.env.EXTERNAL_TIMEOUT_MS || 30_000);
 
-/*Helper utilities*/
+// Cloudinary config (ensure env vars are set)
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// --- Utility helpers ---
 const safeJson = (res, status = 200, body = {}) => res.status(status).json(body);
 
 const ensureAuth = (req) => {
-  if (!req || typeof req.auth !== "function") {
-    throw new Error("Missing auth middleware");
+  // support req.auth() (clerk middleware) or req.userId set earlier
+  try {
+    if (req?.auth && typeof req.auth === "function") {
+      const authResult = req.auth();
+      if (authResult?.userId) return authResult.userId;
+    }
+    if (req?.userId) return req.userId;
+    if (req?.authResult?.userId) return req.authResult.userId;
+  } catch (e) {
+    // fallthrough to error
   }
-  const authResult = req.auth();
-  if (!authResult || !authResult.userId) {
-    throw new Error("Unauthorized");
-  }
-  return authResult.userId;
+  throw new Error("Unauthorized");
 };
 
-const checkFreeUsageLimit = async (plan, free_usage, limit = 10) => {
-  if (plan !== "premium" && typeof free_usage === "number" && free_usage >= limit) {
-    return false;
-  }
-  return true;
-};
+const checkFreeUsageLimit = (plan, free_usage, limit = DEFAULT_FREE_LIMIT) =>
+  plan === "premium" ? true : typeof free_usage === "number" ? free_usage < limit : true;
 
 const incrementFreeUsage = async (userId, currentFreeUsage = 0) => {
+  // non-blocking update; log on failure but don't block user flow
   try {
     await clerkClient.users.updateUserMetadata(userId, {
       privateMetadata: {
-        free_usage: (currentFreeUsage || 0) + 1,
+        free_usage: (Number(currentFreeUsage) || 0) + 1,
       },
     });
   } catch (e) {
-    // don't block main flow if update fails — log for later investigation
-    console.error("Failed to update free_usage:", e?.message || e);
+    console.error("incrementFreeUsage failed:", e?.message || e);
   }
 };
 
@@ -54,47 +68,123 @@ const insertCreation = async ({ userId, prompt, content, type, publish = false }
   try {
     await sql`INSERT INTO creations (user_id, prompt, content, type, publish) VALUES (${userId}, ${prompt}, ${content}, ${type}, ${publish})`;
   } catch (e) {
-    console.error("DB insert failed:", e?.message || e);
-    // swallow DB error to keep user flow working (but return success false in some cases if needed)
+    // Log but do not throw to prevent breaking upstream user flows
+    console.error("insertCreation DB error:", e?.message || e);
   }
-};
-
-const callLLM = async ({ prompt, temperature = 0.7, max_tokens = 400 }) => {
-  const response = await AI.chat.completions.create({
-    model: GEMINI_MODEL,
-    messages: [{ role: "user", content: prompt }],
-    temperature,
-    max_tokens,
-  });
-
-  // defensive checks
-  const content =
-    response?.choices?.[0]?.message?.content ??
-    response?.choices?.[0]?.text ??
-    null;
-
-  if (!content) {
-    const raw = JSON.stringify(response).slice(0, 1000);
-    throw new Error("Invalid LLM response: " + raw);
-  }
-
-  return content;
 };
 
 const cleanupFile = async (filePath) => {
   if (!filePath) return;
   try {
-    // only remove if file exists
     if (fsSync.existsSync(filePath)) {
       await fs.unlink(filePath);
     }
   } catch (e) {
-    console.error("Failed to cleanup file:", e?.message || e);
+    console.error("cleanupFile failed:", e?.message || e);
   }
 };
 
-/*Controllers*/
+const readFileSafe = async (filePath) => {
+  if (!filePath) throw new Error("No file path provided");
+  return fs.readFile(filePath);
+};
 
+const statFileSafe = async (filePath) => {
+  try {
+    return await fs.stat(filePath);
+  } catch {
+    return null;
+  }
+};
+
+const parseJsonSafely = (maybeJson) => {
+  if (!maybeJson || typeof maybeJson !== "string") return null;
+  try {
+    return JSON.parse(maybeJson);
+  } catch {
+    return null;
+  }
+};
+
+const extractJsonArray = (text) => {
+  if (!text) return null;
+  const match = text.match(/\[[\s\S]*\]/);
+  if (match) {
+    try {
+      return JSON.parse(match[0]);
+    } catch {
+      // fallback continue
+    }
+  }
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+};
+
+const extractJsonObject = (text) => {
+  if (!text) return null;
+  const match = text.match(/\{[\s\S]*\}/);
+  if (match) {
+    try {
+      return JSON.parse(match[0]);
+    } catch {
+      // fallback
+    }
+  }
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+};
+
+// LLM call with defensive checks
+const callLLM = async ({ prompt, temperature = 0.7, max_tokens = 500 }) => {
+  if (!prompt || !prompt.trim()) throw new Error("LLM prompt is empty");
+  try {
+    const response = await AI.chat.completions.create({
+      model: GEMINI_MODEL,
+      messages: [{ role: "user", content: prompt }],
+      temperature,
+      max_tokens,
+    });
+
+    const content =
+      response?.choices?.[0]?.message?.content ??
+      response?.choices?.[0]?.text ??
+      response?.outputs?.[0]?.content?.[0]?.text ??
+      null;
+
+    if (!content) {
+      throw new Error("Invalid LLM response");
+    }
+    return content;
+  } catch (e) {
+    console.error("callLLM error:", e?.message || e);
+    throw new Error("LLM request failed");
+  }
+};
+
+// Upload binary buffer (image) to Cloudinary
+const uploadImageBufferToCloudinary = async (buffer, options = {}) => {
+  if (!buffer) throw new Error("No buffer to upload");
+  // Cloudinary accepts data URI or file path. We'll use upload_stream for buffers,
+  // but cloudinary.uploader.upload can accept data URI too.
+  const dataUri = `data:image/png;base64,${Buffer.from(buffer).toString("base64")}`;
+  return cloudinary.uploader.upload(dataUri, { resource_type: "image", ...options });
+};
+
+// Shared middleware-like plan guard for premium features
+const requirePremium = async (req, res) => {
+  const plan = req.plan ?? "free";
+  if (plan !== "premium") {
+    throw { status: 403, body: { success: false, message: "This feature requires premium access. Upgrade to premium to continue." } };
+  }
+};
+
+// --- Controllers ---
 export const generateArticle = async (req, res) => {
   try {
     const userId = ensureAuth(req);
@@ -102,27 +192,19 @@ export const generateArticle = async (req, res) => {
     const plan = req.plan ?? "free";
     const free_usage = Number(req.free_usage ?? 0);
 
-    if (!prompt || !prompt.trim()) {
-      return safeJson(res, 400, { success: false, message: "Prompt is required" });
-    }
+    if (!prompt || !prompt.trim()) return safeJson(res, 400, { success: false, message: "Prompt is required" });
+    if (!checkFreeUsageLimit(plan, free_usage)) return safeJson(res, 403, { success: false, message: "Free usage limit reached" });
 
-    if (!(await checkFreeUsageLimit(plan, free_usage))) {
-      return safeJson(res, 403, {
-        success: false,
-        message: "You have reached your free usage limit. Upgrade to premium for more usage.",
-      });
-    }
-
-    const content = await callLLM({ prompt, temperature: 0.7, max_tokens: Number(length) || 400 });
+    const max_tokens = Number(length) > 0 ? Math.min(2000, Number(length)) : DEFAULT_ARTICLE_TOKENS;
+    const content = await callLLM({ prompt, temperature: 0.7, max_tokens });
 
     await insertCreation({ userId, prompt, content, type: "article" });
-
-    if (plan !== "premium") await incrementFreeUsage(userId, free_usage);
+    if (plan !== "premium") incrementFreeUsage(userId, free_usage); // async non-blocking
 
     return safeJson(res, 200, { success: true, content });
-  } catch (error) {
-    console.error("generateArticle error:", error?.message || error);
-    return safeJson(res, 500, { success: false, message: error?.message || "Server error" });
+  } catch (err) {
+    console.error("generateArticle error:", err?.message || err);
+    return safeJson(res, err?.status || 500, { success: false, message: err?.body?.message || err?.message || "Server error" });
   }
 };
 
@@ -133,63 +215,44 @@ export const generateBlogTitle = async (req, res) => {
     const plan = req.plan ?? "free";
     const free_usage = Number(req.free_usage ?? 0);
 
-    if (!prompt || !prompt.trim()) {
-      return safeJson(res, 400, { success: false, message: "Prompt is required" });
-    }
-
-    if (!(await checkFreeUsageLimit(plan, free_usage))) {
-      return safeJson(res, 403, {
-        success: false,
-        message: "You have reached your free usage limit. Upgrade to premium for more usage.",
-      });
-    }
+    if (!prompt || !prompt.trim()) return safeJson(res, 400, { success: false, message: "Prompt is required" });
+    if (!checkFreeUsageLimit(plan, free_usage)) return safeJson(res, 403, { success: false, message: "Free usage limit reached" });
 
     const content = await callLLM({ prompt, temperature: 0.8, max_tokens: 200 });
 
     await insertCreation({ userId, prompt, content, type: "blog-title" });
-
-    if (plan !== "premium") await incrementFreeUsage(userId, free_usage);
+    if (plan !== "premium") incrementFreeUsage(userId, free_usage);
 
     return safeJson(res, 200, { success: true, content });
-  } catch (error) {
-    console.error("generateBlogTitle error:", error?.message || error);
-    return safeJson(res, 500, { success: false, message: error?.message || "Server error" });
+  } catch (err) {
+    console.error("generateBlogTitle error:", err?.message || err);
+    return safeJson(res, err?.status || 500, { success: false, message: err?.body?.message || err?.message || "Server error" });
   }
 };
 
 export const generateImage = async (req, res) => {
-  // this route expects req.file/upload handled by multer or similar
+  // expects req.body.prompt, optional publish. premium only
+  const tempPath = req.file?.path;
   try {
     const userId = ensureAuth(req);
+    await requirePremium(req, res);
+
     const { prompt, publish } = req.body ?? {};
-    const plan = req.plan ?? "free";
+    if (!prompt || !prompt.trim()) return safeJson(res, 400, { success: false, message: "Prompt is required" });
 
-    if (plan !== "premium") {
-      return safeJson(res, 403, {
-        success: false,
-        message: "This feature is only available for premium users. Upgrade to premium to use this feature.",
-      });
-    }
-
-    if (!prompt || !prompt.trim()) {
-      return safeJson(res, 400, { success: false, message: "Prompt is required" });
-    }
-
-    // Use ClipDrop API to generate image (returns binary)
+    // Use ClipDrop API to generate image binary
     const formData = new FormData();
     formData.append("prompt", prompt);
 
-    const { data } = await axios.post("https://clipdrop-api.co/text-to-image/v1", formData, {
-      headers: { "x-api-key": process.env.CLIPDROP_API_KEY, ...formData.getHeaders?.() },
+    const clipdropResp = await axios.post("https://clipdrop-api.co/text-to-image/v1", formData, {
+      headers: { "x-api-key": process.env.CLIPDROP_API_KEY, ...(formData.getHeaders ? formData.getHeaders() : {}) },
       responseType: "arraybuffer",
       maxContentLength: Infinity,
       maxBodyLength: Infinity,
+      timeout: DEFAULT_TIMEOUT_MS,
     });
 
-    // Convert to base64 data url
-    const base64Image = `data:image/png;base64,${Buffer.from(data, "binary").toString("base64")}`;
-
-    const uploadResult = await cloudinary.uploader.upload(base64Image, { resource_type: "image" });
+    const uploadResult = await uploadImageBufferToCloudinary(clipdropResp.data, { folder: "creations" });
     const secure_url = uploadResult.secure_url;
 
     await insertCreation({
@@ -201,9 +264,12 @@ export const generateImage = async (req, res) => {
     });
 
     return safeJson(res, 200, { success: true, content: secure_url });
-  } catch (error) {
-    console.error("generateImage error:", error?.message || error);
-    return safeJson(res, 500, { success: false, message: error?.message || "Server error" });
+  } catch (err) {
+    console.error("generateImage error:", err?.message || err);
+    // do not swallow errors silently — return a readable message
+    return safeJson(res, err?.status || 500, { success: false, message: err?.body?.message || err?.message || "Server error" });
+  } finally {
+    await cleanupFile(tempPath);
   }
 };
 
@@ -211,34 +277,24 @@ export const removeImageBackground = async (req, res) => {
   const filePath = req.file?.path;
   try {
     const userId = ensureAuth(req);
-    const plan = req.plan ?? "free";
+    await requirePremium(req, res);
 
-    if (plan !== "premium") {
-      await cleanupFile(filePath);
-      return safeJson(res, 403, {
-        success: false,
-        message: "This feature is only available for premium users. Upgrade to premium to use this feature.",
-      });
-    }
-
-    if (!filePath) {
-      return safeJson(res, 400, { success: false, message: "No image uploaded" });
-    }
+    if (!filePath) return safeJson(res, 400, { success: false, message: "No image uploaded" });
 
     const uploadResult = await cloudinary.uploader.upload(filePath, {
-      transformation: [{ effect: "background_removal", background_removal: "remove_the_background" }],
+      transformation: [{ effect: "background_removal" }],
       resource_type: "image",
     });
 
     const secure_url = uploadResult.secure_url;
     await insertCreation({ userId, prompt: "Remove background from image", content: secure_url, type: "image" });
 
-    await cleanupFile(filePath);
     return safeJson(res, 200, { success: true, content: secure_url });
-  } catch (error) {
-    console.error("removeImageBackground error:", error?.message || error);
+  } catch (err) {
+    console.error("removeImageBackground error:", err?.message || err);
+    return safeJson(res, err?.status || 500, { success: false, message: err?.message || "Server error" });
+  } finally {
     await cleanupFile(filePath);
-    return safeJson(res, 500, { success: false, message: error?.message || "Server error" });
   }
 };
 
@@ -246,21 +302,10 @@ export const removeImageObject = async (req, res) => {
   const filePath = req.file?.path;
   try {
     const userId = ensureAuth(req);
-    const plan = req.plan ?? "free";
+    await requirePremium(req, res);
+
     const { object } = req.body ?? {};
-
-    if (plan !== "premium") {
-      await cleanupFile(filePath);
-      return safeJson(res, 403, {
-        success: false,
-        message: "This feature is only available for premium users. Upgrade to premium to use this feature.",
-      });
-    }
-
-    if (!filePath || !object) {
-      await cleanupFile(filePath);
-      return safeJson(res, 400, { success: false, message: "Image and object name are required" });
-    }
+    if (!filePath || !object) return safeJson(res, 400, { success: false, message: "Image and object name are required" });
 
     // Upload original image and generate transformed URL
     const uploadRes = await cloudinary.uploader.upload(filePath, { resource_type: "image" });
@@ -278,53 +323,40 @@ export const removeImageObject = async (req, res) => {
       type: "image",
     });
 
-    await cleanupFile(filePath);
     return safeJson(res, 200, { success: true, content: imageUrl });
-  } catch (error) {
-    console.error("removeImageObject error:", error?.message || error);
+  } catch (err) {
+    console.error("removeImageObject error:", err?.message || err);
+    return safeJson(res, err?.status || 500, { success: false, message: err?.message || "Server error" });
+  } finally {
     await cleanupFile(filePath);
-    return safeJson(res, 500, { success: false, message: error?.message || "Server error" });
   }
+};
+
+const _processResumeFileCommon = async (filePath) => {
+  if (!filePath) throw new Error("No file provided");
+  const stat = await statFileSafe(filePath);
+  if (stat && stat.size > MAX_RESUME_SIZE) throw { status: 400, message: "Resume file size exceeds limit" };
+
+  const dataBuffer = await readFileSafe(filePath);
+  const pdfData = await pdf(dataBuffer);
+  return { pdfText: pdfData.text || "", rawBuffer: dataBuffer };
 };
 
 export const resumeReview = async (req, res) => {
   const filePath = req.file?.path;
   try {
     const userId = ensureAuth(req);
-    const plan = req.plan ?? "free";
+    await requirePremium(req, res);
 
-    if (plan !== "premium") {
-      await cleanupFile(filePath);
-      return safeJson(res, 403, {
-        success: false,
-        message: "This feature is only available for premium users. Upgrade to premium to use this feature.",
-      });
-    }
+    if (!filePath) return safeJson(res, 400, { success: false, message: "Resume file is required" });
 
-    if (!filePath) {
-      return safeJson(res, 400, { success: false, message: "Resume file is required" });
-    }
-
-    // Validate size limit server-side if available (req.file.size may be undefined depending on middleware)
-    try {
-      const stat = await fs.stat(filePath);
-      if (stat.size > 5 * 1024 * 1024) {
-        await cleanupFile(filePath);
-        return safeJson(res, 400, { success: false, message: "Resume file size exceeds 5MB limit. Please upload a smaller file." });
-      }
-    } catch (e) {
-      // ignore stat issues, proceed
-    }
-
-    const dataBuffer = await fs.readFile(filePath);
-    const pdfData = await pdf(dataBuffer);
-
-    const prompt = `Analyze the following resume and provide concise, actionable feedback in BULLET POINTS ONLY. 
+    const { pdfText } = await _processResumeFileCommon(filePath);
+    const prompt = `Analyze the following resume and provide concise, actionable feedback in BULLET POINTS ONLY.
 
 First, calculate an ATS (Applicant Tracking System) Score out of 100 based on:
-- Format compatibility (standard sections, clean formatting)
-- Keyword optimization (relevant skills and keywords)
-- Section completeness (contact info, experience, education, skills)
+- Format compatibility
+- Keyword optimization
+- Section completeness
 - Structure and readability
 - Industry-standard best practices
 
@@ -336,29 +368,17 @@ Then format your response EXACTLY like this using Markdown:
 
 - [Key strength 1]
 
-- [Key strength 2]
-
-- [Key strength 3]
-
 ### AREAS FOR IMPROVEMENT
 
 - [Improvement 1]
-
-- [Improvement 2]
-
-- [Improvement 3]
 
 ### CONTENT QUALITY
 
 - [Content feedback 1]
 
-- [Content feedback 2]
-
 ### STRUCTURE & FORMAT
 
 - [Format feedback 1]
-
-- [Format feedback 2]
 
 ### OVERALL RATING
 
@@ -368,35 +388,32 @@ Then format your response EXACTLY like this using Markdown:
 
 - [Action item 1]
 
-- [Action item 2]
-
-- [Action item 3]
-
 IMPORTANT:
-- Use standard Markdown bullet points (hyphen space).
-- Ensure there is a blank line between every bullet point.
-- Ensure there is a blank line before every header.
-- Keep each bullet point to 1-2 sentences maximum. Be specific and actionable.
-- The ATS Score should be a number between 0-100.
+- Keep bullets short (1-2 sentences).
+- Ensure blank line between bullets and before headers.
 
 Resume Content:
-${pdfData.text}`;
+${pdfText}`;
 
     const content = await callLLM({ prompt, temperature: 0.7, max_tokens: 1000 });
 
     // Extract ATS score defensively
     let atsScore = null;
-    const atsScoreMatch = content.match(/\*\*ATS SCORE:\*\*\s*([0-9]{1,3})/i) || content.match(/ATS SCORE[:\s]+([0-9]{1,3})/i);
-    if (atsScoreMatch) atsScore = parseInt(atsScoreMatch[1], 10);
+    try {
+      const m = content.match(/\*\*ATS SCORE:\*\*\s*([0-9]{1,3})/i) || content.match(/ATS SCORE[:\s]+([0-9]{1,3})/i);
+      if (m) atsScore = parseInt(m[1], 10);
+    } catch {
+      atsScore = null;
+    }
 
     await insertCreation({ userId, prompt: "Review the uploaded resume", content, type: "resume-review" });
 
-    await cleanupFile(filePath);
     return safeJson(res, 200, { success: true, content, atsScore });
-  } catch (error) {
-    console.error("resumeReview error:", error?.message || error);
+  } catch (err) {
+    console.error("resumeReview error:", err?.message || err);
+    return safeJson(res, err?.status || 500, { success: false, message: err?.message || "Server error" });
+  } finally {
     await cleanupFile(filePath);
-    return safeJson(res, 500, { success: false, message: error?.message || "Server error" });
   }
 };
 
@@ -404,67 +421,36 @@ export const findJobOpportunities = async (req, res) => {
   const filePath = req.file?.path;
   try {
     const userId = ensureAuth(req);
-    const plan = req.plan ?? "free";
+    await requirePremium(req, res);
 
-    if (plan !== "premium") {
-      await cleanupFile(filePath);
-      return safeJson(res, 403, {
-        success: false,
-        message: "This feature is only available for premium users. Upgrade to premium to use this feature.",
-      });
-    }
+    if (!filePath) return safeJson(res, 400, { success: false, message: "Resume file is required" });
 
-    if (!filePath) {
-      return safeJson(res, 400, { success: false, message: "Resume file is required" });
-    }
-
-    // size check
-    try {
-      const stat = await fs.stat(filePath);
-      if (stat.size > 5 * 1024 * 1024) {
-        await cleanupFile(filePath);
-        return safeJson(res, 400, { success: false, message: "Resume file size exceeds 5MB limit. Please upload a smaller file." });
-      }
-    } catch (e) {
-      // ignore
-    }
-
-    const dataBuffer = await fs.readFile(filePath);
-    const pdfData = await pdf(dataBuffer);
+    const { pdfText } = await _processResumeFileCommon(filePath);
 
     const analysisPrompt = `Analyze the following resume and extract key information to suggest relevant job opportunities.
 
 Resume Content:
-${pdfData.text}
+${pdfText}
 
-Based on the resume, provide:
+Provide:
 1. Key skills and technologies mentioned
 2. Years of experience and level (junior/mid/senior)
 3. Industry/domain expertise
-4. Education background
+4. Education
 5. Key achievements and responsibilities
 
-Then, suggest 8-12 specific job titles/roles that would be a good fit for this candidate. Format your response as a JSON array of job titles, where each job title is a string.
-
-Return ONLY the JSON array, no other text.`;
+Then, suggest 8-12 specific job titles/roles that would be a good fit for this candidate.
+Return ONLY a JSON array of job title strings, no other text.`;
 
     const llmResp = await callLLM({ prompt: analysisPrompt, temperature: 0.7, max_tokens: 500 });
 
-    // Try to extract JSON array
-    let jobTitles = [];
-    try {
-      const jsonMatch = llmResp.match(/\[[\s\S]*\]/);
-      if (jsonMatch) {
-        jobTitles = JSON.parse(jsonMatch[0]);
-      } else {
-        jobTitles = JSON.parse(llmResp);
-      }
-    } catch (err) {
-      // fallback: parse as lines (best-effort)
+    let jobTitles = extractJsonArray(llmResp) || [];
+    if (!Array.isArray(jobTitles) || jobTitles.length === 0) {
+      // fallback: best-effort parse lines
       jobTitles = llmResp
         .split("\n")
-        .map((line) => line.replace(/^[-•\d.\s"]+|["\s]+$/g, "").trim())
-        .filter((line) => line.length > 0)
+        .map((l) => l.replace(/^[-•\d.\s"]+|["\s]+$/g, "").trim())
+        .filter(Boolean)
         .slice(0, 12);
     }
 
@@ -479,55 +465,29 @@ Return ONLY the JSON array, no other text.`;
       type: "job-opportunities",
     });
 
-    await cleanupFile(filePath);
     return safeJson(res, 200, { success: true, jobTitles });
-  } catch (error) {
-    console.error("findJobOpportunities error:", error?.message || error);
+  } catch (err) {
+    console.error("findJobOpportunities error:", err?.message || err);
+    return safeJson(res, err?.status || 500, { success: false, message: err?.message || "Server error" });
+  } finally {
     await cleanupFile(filePath);
-    return safeJson(res, 500, { success: false, message: error?.message || "Server error" });
   }
 };
 
 export const searchJobs = async (req, res) => {
   try {
     const { jobTitle } = req.body ?? {};
-    const plan = req.plan ?? "free";
+    await requirePremium(req, res);
 
-    if (plan !== "premium") {
-      return safeJson(res, 403, {
-        success: false,
-        message: "This feature is only available for premium users. Upgrade to premium to use this feature.",
-      });
-    }
-
-    if (!jobTitle || !jobTitle.trim()) {
-      return safeJson(res, 400, { success: false, message: "jobTitle is required" });
-    }
+    if (!jobTitle || !jobTitle.trim()) return safeJson(res, 400, { success: false, message: "jobTitle is required" });
 
     const searchPrompt = `Generate a comprehensive job search query for the position: "${jobTitle}"
-
-Provide:
-1. Optimized search keywords for job boards
-2. Relevant job board suggestions (LinkedIn, Indeed, Glassdoor, Internshala, Naukri, etc.)
-3. Search URL parameters that would help find active listings
-
 Format as JSON:
-{
-  "keywords": "string",
-  "jobBoards": ["board1","board2"],
-  "searchUrls": {
-    "indeed": "url",
-    "linkedin": "url",
-    "glassdoor": "url",
-    "internshala": "url",
-    "naukri": "url"
-  }
-}`;
+{ "keywords": "string", "jobBoards": ["board1"], "searchUrls": { "indeed":"url", "linkedin":"url", "glassdoor":"url", "internshala":"url", "naukri":"url" } }`;
 
     const llmResp = await callLLM({ prompt: searchPrompt, temperature: 0.7, max_tokens: 300 });
 
     const encodedTitle = encodeURIComponent(jobTitle);
-
     const defaultSearchUrls = {
       indeed: `https://www.indeed.com/jobs?q=${encodedTitle}`,
       linkedin: `https://www.linkedin.com/jobs/search/?keywords=${encodedTitle}`,
@@ -536,114 +496,69 @@ Format as JSON:
       naukri: `https://www.naukri.com/${encodedTitle}-jobs`,
     };
 
-    let searchData = {
-      keywords: jobTitle,
-      jobBoards: ["LinkedIn", "Indeed", "Glassdoor", "Internshala", "Naukri"],
-      searchUrls: defaultSearchUrls,
+    let parsed = extractJsonObject(llmResp);
+    const searchData = {
+      keywords: parsed?.keywords || jobTitle,
+      jobBoards: parsed?.jobBoards || ["LinkedIn", "Indeed", "Glassdoor", "Internshala", "Naukri"],
+      searchUrls: {
+        indeed: parsed?.searchUrls?.indeed || defaultSearchUrls.indeed,
+        linkedin: parsed?.searchUrls?.linkedin || defaultSearchUrls.linkedin,
+        glassdoor: parsed?.searchUrls?.glassdoor || defaultSearchUrls.glassdoor,
+        internshala: parsed?.searchUrls?.internshala || defaultSearchUrls.internshala,
+        naukri: parsed?.searchUrls?.naukri || defaultSearchUrls.naukri,
+      },
     };
 
-    try {
-      const jsonMatch = llmResp.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const parsedData = JSON.parse(jsonMatch[0]);
-        searchData = {
-          keywords: parsedData.keywords || jobTitle,
-          jobBoards: parsedData.jobBoards || searchData.jobBoards,
-          searchUrls: {
-            indeed: parsedData.searchUrls?.indeed || defaultSearchUrls.indeed,
-            linkedin: parsedData.searchUrls?.linkedin || defaultSearchUrls.linkedin,
-            glassdoor: parsedData.searchUrls?.glassdoor || defaultSearchUrls.glassdoor,
-            internshala: parsedData.searchUrls?.internshala || defaultSearchUrls.internshala,
-            naukri: parsedData.searchUrls?.naukri || defaultSearchUrls.naukri,
-          },
-        };
-      }
-    } catch (err) {
-      console.error("searchJobs: failed parsing LLM response, using defaults", err?.message || err);
-      // use default searchData
-    }
-
     return safeJson(res, 200, { success: true, searchData });
-  } catch (error) {
-    console.error("searchJobs error:", error?.message || error);
-    return safeJson(res, 500, { success: false, message: error?.message || "Server error" });
+  } catch (err) {
+    console.error("searchJobs error:", err?.message || err);
+    return safeJson(res, err?.status || 500, { success: false, message: err?.message || "Server error" });
   }
 };
 
 export const generateLearningResources = async (req, res) => {
   try {
     const { jobDescription } = req.body ?? {};
-    const plan = req.plan ?? "free";
+    await requirePremium(req, res);
 
-    if (plan !== "premium") {
-      return safeJson(res, 403, {
-        success: false,
-        message: "This feature is only available for premium users. Upgrade to premium to use this feature.",
-      });
-    }
-
-    if (!jobDescription || !jobDescription.trim()) {
-      return safeJson(res, 400, { success: false, message: "Job description is required" });
-    }
+    if (!jobDescription || !jobDescription.trim()) return safeJson(res, 400, { success: false, message: "Job description is required" });
 
     const prompt = `Analyze the following job description and extract the top 5-7 key technical skills or technologies required.
-    
-    Job Description:
-    ${jobDescription.slice(0, 2000)}
-    
-    For each skill, provide:
-    1. The name of the skill/technology
-    2. A brief 1-sentence explanation of why it's important for this role based on the description (or general knowledge if not specified).
-    3. A specific YouTube search query to learn this skill.
-    4. A specific, high-quality URL to an article, documentation, or tutorial website that teaches this skill (e.g., official docs, freeCodeCamp, MDN, GeeksforGeeks, etc.). Ensure the URL is valid and points to a real page.
 
-    Format the output as a JSON array of objects:
-    [
-      {
-        "skill": "React.js",
-        "importance": "Required for building the frontend user interface.",
-        "youtubeQuery": "React.js crash course for beginners 2024",
-        "articleUrl": "https://react.dev/learn"
-      }
-    ]
-    
-    Return ONLY the JSON array.`;
+Job Description:
+${jobDescription.slice(0, 2000)}
+
+For each skill, return JSON objects with fields:
+"skill","importance","youtubeQuery","articleUrl"
+Return ONLY a JSON array.`;
 
     const llmResp = await callLLM({ prompt, temperature: 0.7, max_tokens: 800 });
 
-    let resources = [];
-    try {
-      const jsonMatch = llmResp.match(/\[[\s\S]*\]/);
-      if (jsonMatch) {
-        resources = JSON.parse(jsonMatch[0]);
-      } else {
-        resources = JSON.parse(llmResp);
-      }
-    } catch (e) {
-      console.error("Failed to parse learning resources JSON:", e);
-      // Fallback or empty array
-    }
+    let resources = extractJsonArray(llmResp) || [];
+    // normalize fallback if parse failed
+    resources = Array.isArray(resources) ? resources.slice(0, 7) : [];
 
-    // Enhance resources with actual links (generated on server to ensure consistency)
-    const enhancedResources = resources.map(r => ({
-      ...r,
-      youtubeLink: `https://www.youtube.com/results?search_query=${encodeURIComponent(r.youtubeQuery)}`,
-      articleLink: r.articleUrl || `https://www.google.com/search?q=${encodeURIComponent(r.skill + " tutorial")}` // Fallback to google search if no URL
+    const enhancedResources = resources.map((r) => ({
+      skill: r.skill || r.name || "",
+      importance: r.importance || "",
+      youtubeQuery: r.youtubeQuery || `${r.skill || r.name} tutorial`,
+      articleUrl: r.articleUrl || r.url || `https://www.google.com/search?q=${encodeURIComponent((r.skill || r.name) + " tutorial")}`,
+      youtubeLink: `https://www.youtube.com/results?search_query=${encodeURIComponent(r.youtubeQuery || (r.skill || r.name))}`,
     }));
 
-    // Save to database
-    const userId = req.userId;
-    await insertCreation({
-      userId,
-      prompt: jobDescription.slice(0, 100) + (jobDescription.length > 100 ? "..." : ""),
-      content: JSON.stringify(enhancedResources),
-      type: "learning-resources",
-    });
+    const userId = req.userId || (req.auth && req.auth().userId) || null;
+    if (userId) {
+      await insertCreation({
+        userId,
+        prompt: jobDescription.slice(0, 100) + (jobDescription.length > 100 ? "..." : ""),
+        content: JSON.stringify(enhancedResources),
+        type: "learning-resources",
+      });
+    }
 
     return safeJson(res, 200, { success: true, resources: enhancedResources });
-
-  } catch (error) {
-    console.error("generateLearningResources error:", error?.message || error);
-    return safeJson(res, 500, { success: false, message: error?.message || "Server error" });
+  } catch (err) {
+    console.error("generateLearningResources error:", err?.message || err);
+    return safeJson(res, err?.status || 500, { success: false, message: err?.message || "Server error" });
   }
 };
