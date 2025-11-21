@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Gem, Sparkles, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Gem, Sparkles, Plus, ChevronLeft, ChevronRight, Trash2, CheckSquare, Square } from 'lucide-react';
 import { Protect, useAuth } from '@clerk/clerk-react';
 import CreationItem from '../components/CreationItem';
 import { SkeletonCard, SkeletonCreationItem } from '../components/LoadingComponents';
@@ -14,6 +14,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [paginationMeta, setPaginationMeta] = useState({ total: 0, pages: 0, limit: 50 });
+  const [selectedIds, setSelectedIds] = useState([]);
   const { getToken } = useAuth();
 
   const getDashboardData = useCallback(async (page = 1) => {
@@ -64,7 +65,50 @@ const Dashboard = () => {
 
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
+    setSelectedIds([]); // Clear selection when changing pages
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.length === creations.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(creations.map(c => c.id));
+    }
+  };
+
+  const handleToggleSelect = (id) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete ${selectedIds.length} creation${selectedIds.length > 1 ? 's' : ''}?`
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      const token = await getToken();
+      const deletePromises = selectedIds.map(id => 
+        axios.post(
+          '/api/user/delete-creation',
+          { id },
+          { headers: { Authorization: `Bearer ${token}` } }
+        )
+      );
+
+      await Promise.all(deletePromises);
+      toast.success(`${selectedIds.length} creation${selectedIds.length > 1 ? 's' : ''} deleted successfully`);
+      setSelectedIds([]);
+      getDashboardData(currentPage);
+    } catch (error) {
+      toast.error(error.message || 'Failed to delete creations');
+    }
   };
 
   return (
@@ -126,7 +170,34 @@ const Dashboard = () => {
 
       {/* Recent Creations */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-foreground">Recent Creations</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-foreground">Recent Creations</h3>
+          
+          {!loading && creations.length > 0 && (
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleSelectAll}
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground border border-border rounded-lg hover:bg-secondary transition-colors"
+              >
+                {selectedIds.length === creations.length ? (
+                  <><CheckSquare className="w-4 h-4" /> Deselect All</>
+                ) : (
+                  <><Square className="w-4 h-4" /> Select All</>
+                )}
+              </button>
+              
+              {selectedIds.length > 0 && (
+                <button
+                  onClick={handleBulkDelete}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors shadow-sm"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete ({selectedIds.length})
+                </button>
+              )}
+            </div>
+          )}
+        </div>
 
         <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
           {loading ? (
@@ -138,7 +209,13 @@ const Dashboard = () => {
           ) : creations.length > 0 ? (
             <div className="divide-y divide-border">
               {creations.map(item => (
-                <CreationItem key={item.id} item={item} onDelete={handleDeleteCreation} />
+                <CreationItem 
+                  key={item.id} 
+                  item={item} 
+                  onDelete={handleDeleteCreation}
+                  isSelected={selectedIds.includes(item.id)}
+                  onToggleSelect={handleToggleSelect}
+                />
               ))}
             </div>
           ) : (

@@ -10,6 +10,8 @@ import {
   Briefcase,
   GraduationCap,
   ExternalLink,
+  CheckSquare,
+  Square,
 } from "lucide-react";
 
 /**
@@ -30,7 +32,7 @@ const ICON_MAP = {
   default: { icon: FileText, bg: "bg-blue-500/10", text: "text-blue-600" },
 };
 
-const CreationItem = ({ item, onDelete }) => {
+const CreationItem = ({ item, onDelete, isSelected = false, onToggleSelect }) => {
   const [expanded, setExpanded] = useState(false);
 
   // memoize icon/color selection
@@ -211,6 +213,22 @@ const CreationItem = ({ item, onDelete }) => {
         aria-controls={`creation-${item?.id}`}
       >
         <div className="flex items-center gap-4 flex-1 min-w-0">
+          {onToggleSelect && (
+            <div 
+              className="flex-shrink-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleSelect(item.id);
+              }}
+            >
+              {isSelected ? (
+                <CheckSquare className="w-5 h-5 text-primary cursor-pointer hover:text-primary/80 transition-colors" />
+              ) : (
+                <Square className="w-5 h-5 text-muted-foreground cursor-pointer hover:text-foreground transition-colors" />
+              )}
+            </div>
+          )}
+          
           <div className={`p-2 rounded-lg ${bgColor} ${textColor}`}>
             <Icon className="w-5 h-5" />
           </div>
@@ -258,6 +276,8 @@ CreationItem.propTypes = {
     created_at: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   }).isRequired,
   onDelete: PropTypes.func.isRequired,
+  isSelected: PropTypes.bool,
+  onToggleSelect: PropTypes.func,
 };
 
 export default CreationItem;

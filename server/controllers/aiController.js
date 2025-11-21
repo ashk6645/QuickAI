@@ -544,6 +544,7 @@ Return ONLY a JSON array.`;
       youtubeQuery: r.youtubeQuery || `${r.skill || r.name} tutorial`,
       articleUrl: r.articleUrl || r.url || `https://www.google.com/search?q=${encodeURIComponent((r.skill || r.name) + " tutorial")}`,
       youtubeLink: `https://www.youtube.com/results?search_query=${encodeURIComponent(r.youtubeQuery || (r.skill || r.name))}`,
+      articleLink: r.articleUrl || r.url || `https://www.google.com/search?q=${encodeURIComponent((r.skill || r.name) + " tutorial")}`,
     }));
 
     const userId = req.userId || (req.auth && req.auth().userId) || null;
