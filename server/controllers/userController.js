@@ -1,8 +1,8 @@
 import sql from "../configs/db.js";
 
 /* --- Config / Defaults --- */
-const DEFAULT_LIMIT = 20;
-const MAX_LIMIT = 100;
+const DEFAULT_LIMIT = 50;
+const MAX_LIMIT = 1000;
 
 /* Helpers */
 const safeJson = (res, status = 200, body = {}) => res.status(status).json(body);
