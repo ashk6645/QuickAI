@@ -64,7 +64,7 @@ Example format:
             <div className='bg-card rounded-xl border border-border shadow-sm sticky top-0'>
               <div className='flex items-center gap-3 px-6 pt-6 pb-4 border-b border-border bg-muted/50'>
                 <div className='w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center'>
-                  <Edit className='w-5 h-5 text-primary' />
+                  <Hash className='w-5 h-5 text-primary' />
                 </div>
                 <h2 className='text-lg font-semibold text-foreground'>Title Configuration</h2>
               </div>

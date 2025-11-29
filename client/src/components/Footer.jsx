@@ -50,4 +50,4 @@ Create smarter content and accelerate your learning with our suite of AI tools.
     )
 }
 
-export default Footer
+export default Footer;

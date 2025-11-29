@@ -6,7 +6,7 @@ import Testimonials from '../components/Testimonials'
 import Plan from '../components/Plan'
 import Footer from '../components/Footer'
 
-const Hone = () => {
+const Home = () => {
   return (
     <>
       <Navbar/>
@@ -19,4 +19,4 @@ const Hone = () => {
   )
 }
 
-export default Hone;
+export default Home;
