@@ -57,15 +57,15 @@ const ReviewResume = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Upload Section */}
           <div className="lg:col-span-1">
-            <div className="bg-card p-6 rounded-xl border border-border shadow-sm sticky top-0">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-primary" />
+            <div className="bg-card rounded-xl border border-border shadow-sm sticky top-0">
+              <div className='flex items-center gap-3 px-6 pt-6 pb-4 border-b border-border bg-muted/50'>
+                <div className='w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center'>
+                  <Upload className='w-5 h-5 text-primary' />
                 </div>
-                <h2 className="text-lg font-semibold text-foreground">Upload Resume</h2>
+                <h2 className='text-lg font-semibold text-foreground'>Upload Resume</h2>
               </div>
 
-              <form onSubmit={onSubmitHandler} className="space-y-5">
+              <form onSubmit={onSubmitHandler} className="space-y-5 p-6">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
                     Resume File
@@ -123,13 +123,13 @@ const ReviewResume = () => {
 
           {/* Output Section */}
           <div className="lg:col-span-2">
-            <div className="bg-card p-6 rounded-xl border border-border shadow-sm h-[calc(100vh-8rem)] flex flex-col">
-              <div className="flex items-center justify-between mb-6 flex-shrink-0">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center">
-                    <FileText className="w-5 h-5 text-muted-foreground" />
+            <div className="bg-card rounded-xl border border-border shadow-sm h-[calc(100vh-8rem)] flex flex-col">
+              <div className='flex items-center justify-between px-6 pt-6 pb-4 border-b border-border bg-muted/50 flex-shrink-0'>
+                <div className='flex items-center gap-3'>
+                  <div className='w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center'>
+                    <Sparkles className='w-5 h-5 text-primary' />
                   </div>
-                  <h2 className="text-lg font-semibold text-foreground">Analysis Results</h2>
+                  <h2 className='text-lg font-semibold text-foreground'>Review Feedback</h2>
                 </div>
                 {content && (
                   <ActionButtons
