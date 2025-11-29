@@ -4,7 +4,7 @@ import {
   Briefcase,
   ExternalLink,
   Sparkles,
-  Upload
+  Upload,
 } from "lucide-react";
 import React, { useState } from "react";
 import axios from "axios";
@@ -87,8 +87,8 @@ const JobOpportunities = () => {
       console.error("Error searching jobs:", error);
       toast.error(
         error.response?.data?.message ||
-        error.message ||
-        "Failed to search jobs"
+          error.message ||
+          "Failed to search jobs"
       );
     } finally {
       setSearchingJob(null);
@@ -98,7 +98,6 @@ const JobOpportunities = () => {
   return (
     <div className="h-full overflow-y-auto p-6">
       <div className="max-w-7xl mx-auto">
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Upload Section */}
           <div className="lg:col-span-1">
@@ -125,10 +124,14 @@ const JobOpportunities = () => {
                       <div className="flex flex-col items-center justify-center pt-5 pb-6">
                         <Upload className="w-8 h-8 mb-3 text-muted-foreground" />
                         <p className="mb-2 text-sm text-muted-foreground">
-                          <span className="font-semibold text-foreground">Click to upload</span>{" "}
+                          <span className="font-semibold text-foreground">
+                            Click to upload
+                          </span>{" "}
                           or drag and drop
                         </p>
-                        <p className="text-xs text-muted-foreground">PDF (MAX. 5MB)</p>
+                        <p className="text-xs text-muted-foreground">
+                          PDF (MAX. 5MB)
+                        </p>
                       </div>
                       <input
                         id="dropzone-file"
@@ -232,7 +235,9 @@ const JobOpportunities = () => {
                             <div className="mt-4 pt-4 border-t border-border animate-in fade-in duration-300">
                               {searchData.keywords && (
                                 <p className="text-sm text-muted-foreground mb-3">
-                                  <strong className="text-foreground">Keywords:</strong>{" "}
+                                  <strong className="text-foreground">
+                                    Keywords:
+                                  </strong>{" "}
                                   {searchData.keywords}
                                 </p>
                               )}
