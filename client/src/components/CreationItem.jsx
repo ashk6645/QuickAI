@@ -32,6 +32,19 @@ const ICON_MAP = {
   default: { icon: FileText, bg: "bg-blue-500/10", text: "text-blue-600" },
 };
 
+// Map types to proper display labels (matching backend type values)
+const TYPE_LABELS = {
+  "article": "Write Article",
+  "blog-title": "Blog Titles",
+  "image": "Generate Images",
+  "remove-background": "Remove Background",
+  "remove-object": "Remove Object",
+  "resume-review": "Review Resume",
+  "job-opportunities": "Job Opportunities",
+  "learning-resources": "Learning Resources",
+  "learning-roadmap": "Learning Roadmap",
+};
+
 const CreationItem = ({ item, onDelete, isSelected = false, onToggleSelect }) => {
   const [expanded, setExpanded] = useState(false);
 
@@ -235,10 +248,15 @@ const CreationItem = ({ item, onDelete, isSelected = false, onToggleSelect }) =>
 
           <div className="flex-1 min-w-0">
             <h2 className="font-medium text-foreground truncate">{item?.prompt}</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {item?.created_at ? new Date(item.created_at).toLocaleDateString() : ""} •{" "}
-              {String(item?.type || "").replaceAll("-", " ")}
-            </p>
+            <div className="flex items-center gap-2 mt-1">
+              <p className="text-xs text-muted-foreground">
+                {item?.created_at ? new Date(item.created_at).toLocaleDateString() : ""}
+              </p>
+              <span className="text-xs text-muted-foreground"></span>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-blue-500/10 text-blue-600 border border-blue-500/20">
+                {TYPE_LABELS[item?.type] || String(item?.type || "").replaceAll("-", " ")}
+              </span>
+            </div>
           </div>
         </div>
 
