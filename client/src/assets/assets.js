@@ -6,7 +6,7 @@ import star_icon from "./star_icon.svg";
 import star_dull_icon from "./star_dull_icon.svg";
 import profile_img_1 from "./profile_img_1.png";
 import arrow_icon from "./arrow_icon.svg";
-import { SquarePen, Hash, Image, Eraser, Scissors, FileText, Briefcase, Users, GraduationCap } from 'lucide-react'
+import { SquarePen, Hash, Image, Eraser, Scissors, FileText, Briefcase, Users, GraduationCap, Map } from 'lucide-react'
 import ai_gen_img_1 from "./ai_gen_img_1.png";
 import ai_gen_img_2 from "./ai_gen_img_2.png";
 import ai_gen_img_3 from "./ai_gen_img_3.png";
@@ -78,6 +78,13 @@ export const AiToolsData = [
         Icon: GraduationCap,
         bg: { from: '#F59E0B', to: '#D97706' },
         path: '/ai/learning-resources'
+    },
+    {
+        title: 'Learning Roadmap',
+        description: 'Generate comprehensive, structured learning paths with phases, milestones, and resources for any career or topic.',
+        Icon: Map,
+        bg: { from: '#A855F7', to: '#EC4899' },
+        path: '/ai/learning-roadmap'
     },
     {
         title: 'Community',

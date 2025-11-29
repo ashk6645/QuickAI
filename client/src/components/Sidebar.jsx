@@ -1,5 +1,5 @@
 import { Protect, useClerk, useUser } from '@clerk/clerk-react';
-import { Eraser, FileText, Hash, House, Image, LogOut, Scissors, SquarePen, Users, Briefcase, ChevronLeft, GraduationCap, ChevronRight } from 'lucide-react';
+import { Eraser, FileText, Hash, House, Image, LogOut, Scissors, SquarePen, Users, Briefcase, ChevronLeft, GraduationCap, ChevronRight, Map } from 'lucide-react';
 import React from 'react'
 import { Link, NavLink } from 'react-router-dom';
 import { assets } from '../assets/assets';
@@ -14,6 +14,7 @@ const navItems = [
     { to: '/ai/review-resume', label: 'Review Resume', Icon: FileText },
     { to: '/ai/job-opportunities', label: 'Job Opportunities', Icon: Briefcase },
     { to: '/ai/learning-resources', label: 'Learning Resources', Icon: GraduationCap },
+    { to: '/ai/learning-roadmap', label: 'Learning Roadmap', Icon: Map },
     { to: '/ai/community', label: 'Community', Icon: Users },
 ]
 

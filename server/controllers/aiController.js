@@ -563,3 +563,172 @@ Return ONLY a JSON array.`;
     return safeJson(res, err?.status || 500, { success: false, message: err?.message || "Server error" });
   }
 };
+
+/**
+ * Generate comprehensive learning roadmap for a job role or topic
+ * Premium-quality, structured learning path with phases, modules, milestones
+ */
+export const generateLearningRoadmap = async (req, res) => {
+  try {
+    const userId = ensureAuth(req);
+    const { input } = req.body;
+    const plan = req.plan ?? "free";
+    const free_usage = Number(req.free_usage ?? 0);
+
+    if (!input || typeof input !== "string" || input.trim().length < 3) {
+      return safeJson(res, 400, { success: false, message: "Please provide a job role or topic (minimum 3 characters)" });
+    }
+
+    // Check usage limits
+    if (!checkFreeUsageLimit(plan, free_usage)) {
+      return safeJson(res, 403, { success: false, message: "Free usage limit reached" });
+    }
+
+    const trimmedInput = input.trim().slice(0, 2000);
+
+    const prompt = `You are an expert teacher, career counselor and curriculum designer with deep expertise in creating structured learning paths. Create a comprehensive, well-organized learning roadmap for:
+
+"${trimmedInput}"
+
+CRITICAL STRUCTURE GUIDELINES:
+1. ALWAYS start from absolute fundamentals - assume the learner is a complete beginner
+2. Build progressively - each phase should naturally lead to the next
+3. Cover ALL essential topics systematically - don't skip foundational concepts
+4. For technical subjects (like DSA, programming languages):
+   - Phase 1: Language fundamentals (syntax, data types, control flow, functions)
+   - Phase 2: Core concepts (OOP, error handling, basic algorithms)
+   - Phase 3: Main topic fundamentals (basic data structures like arrays, strings, linked lists)
+   - Phase 4: Advanced topics (trees, graphs, dynamic programming, system design)
+5. For non-technical subjects: Follow logical learning progression from basics to advanced
+6. Include practical applications and projects at each level
+
+EXAMPLE STRUCTURE for "DSA with Java":
+- Phase 1: Java Fundamentals (syntax, variables, loops, conditionals, functions, arrays, strings)
+- Phase 2: Object-Oriented Programming (classes, objects, inheritance, polymorphism, interfaces)
+- Phase 3: Linear Data Structures (arrays, linked lists, stacks, queues, hashmaps)
+- Phase 4: Non-Linear & Advanced DSA (trees, graphs, heaps, dynamic programming, recursion)
+
+JSON FORMAT INSTRUCTIONS:
+- Respond with ONLY valid JSON
+- Do NOT use markdown code blocks or backticks
+- Do NOT add any text before or after the JSON
+- Start your response with { and end with }
+- Keep it CONCISE - the entire response must fit within 6000 tokens
+- Ensure the JSON is complete and properly closed
+
+Generate a structured learning path with the following JSON format:
+
+{
+  "title": "Clear, motivating title for the learning path",
+  "description": "2-3 sentence overview of what the learner will achieve",
+  "totalDuration": "Estimated total time (e.g., '3-6 months', '8-12 weeks')",
+  "difficulty": "Beginner|Intermediate|Advanced",
+  "prerequisites": ["prerequisite 1", "prerequisite 2"],
+  "phases": [
+    {
+      "phaseNumber": 1,
+      "phaseName": "Foundation/Core/Advanced etc.",
+      "duration": "2-4 weeks",
+      "description": "What this phase covers",
+      "modules": [
+        {
+          "moduleName": "Specific topic/skill",
+          "duration": "3-5 days",
+          "topics": ["topic 1", "topic 2", "topic 3"],
+          "learningObjectives": ["objective 1", "objective 2"],
+          "resources": [
+            {
+              "type": "video|article|practice|book|course",
+              "title": "Resource name",
+              "platform": "YouTube|Udemy|Coursera|FreeCodeCamp|etc",
+              "difficulty": "Beginner|Intermediate|Advanced"
+            }
+          ],
+          "projects": ["hands-on project 1", "hands-on project 2"]
+        }
+      ],
+      "milestone": "Key achievement at end of this phase"
+    }
+  ],
+  "careerPaths": ["Possible career path 1", "Possible career path 2"],
+  "nextSteps": ["What to do after completing this roadmap"]
+}
+
+CONTENT REQUIREMENTS:
+- Create 4 phases with clear progression: Fundamentals → Core Concepts → Main Topics → Advanced
+- Each phase should have 2-3 modules (NOT more than 3)
+- Each module should have 2-3 resources (NOT more than 3)
+- Keep descriptions brief and concise
+- Include diverse resource types (videos, articles, practice platforms, books)
+- Make it actionable with specific projects and milestones
+- Mention real platforms/resources (YouTube channels, Coursera, Udemy, freeCodeCamp, LeetCode, HackerRank, etc.)
+- Include difficulty progression from beginner to advanced
+- Add career insights if it's job-related
+- Return ONLY valid JSON, no markdown formatting`;
+
+    const llmResp = await callLLM({ prompt, temperature: 0.7, max_tokens: 6000 });
+
+    console.log("=== LLM Response Debug ===");
+    console.log("Response length:", llmResp?.length);
+    console.log("First 200 chars:", llmResp?.substring(0, 200));
+    console.log("Last 200 chars:", llmResp?.substring(llmResp.length - 200));
+    console.log("========================");
+
+    let roadmap = null;
+    try {
+      // Remove markdown code blocks if present
+      let cleanedResp = llmResp.trim();
+      
+      // Remove all markdown code block markers
+      cleanedResp = cleanedResp.replace(/^```json\s*/gm, '').replace(/^```\s*/gm, '').replace(/\s*```$/gm, '');
+      cleanedResp = cleanedResp.trim();
+      
+      console.log("Cleaned response length:", cleanedResp.length);
+      console.log("First 200 chars of cleaned:", cleanedResp.substring(0, 200));
+      console.log("Last 200 chars of cleaned:", cleanedResp.substring(cleanedResp.length - 200));
+      
+      // Parse the cleaned JSON
+      roadmap = JSON.parse(cleanedResp);
+      
+    } catch (parseErr) {
+      console.error("Failed to parse roadmap JSON:", parseErr);
+      console.error("Parse error message:", parseErr.message);
+      return safeJson(res, 500, { 
+        success: false, 
+        message: "Failed to generate structured roadmap. Please try again." 
+      });
+    }
+
+    // Validate roadmap structure
+    if (!roadmap || !roadmap.phases || !Array.isArray(roadmap.phases)) {
+      console.error("Invalid roadmap structure:", roadmap);
+      return safeJson(res, 500, {
+        success: false,
+        message: "Invalid roadmap structure generated. Please try again."
+      });
+    }
+
+    console.log("Roadmap generated successfully with", roadmap.phases.length, "phases");
+
+    // Save to database
+    if (userId) {
+      await insertCreation({
+        userId,
+        prompt: trimmedInput.slice(0, 100) + (trimmedInput.length > 100 ? "..." : ""),
+        content: JSON.stringify(roadmap),
+        type: "learning-roadmap",
+      });
+    }
+
+    // Increment free usage for non-premium users
+    if (plan !== "premium") incrementFreeUsage(userId, free_usage);
+
+    return safeJson(res, 200, { success: true, roadmap });
+  } catch (err) {
+    console.error("generateLearningRoadmap error:", err?.message || err);
+    return safeJson(res, err?.status || 500, { 
+      success: false, 
+      message: err?.message || "Server error" 
+    });
+  }
+};
