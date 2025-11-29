@@ -6,6 +6,7 @@ import {
   ExternalLink,
   GraduationCap,
   Loader2,
+  Sparkles,
 } from "lucide-react";
 import axios from "axios";
 import { useAuth } from "@clerk/clerk-react";
@@ -60,8 +61,8 @@ const LearningResources = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Input Section */}
           <div className="lg:col-span-1">
-            <div className="bg-card p-6 rounded-xl border border-border shadow-sm sticky top-0">
-              <div className="flex items-center gap-3 mb-6">
+            <div className="bg-card rounded-xl border border-border shadow-sm sticky top-0">
+              <div className="flex items-center gap-3 px-6 pt-6 pb-4 border-b border-border bg-muted/50">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                   <GraduationCap className="w-5 h-5 text-primary" />
                 </div>
@@ -70,16 +71,16 @@ const LearningResources = () => {
                 </h2>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form onSubmit={handleSubmit} className="space-y-5 p-6">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    Paste Job Description
+                    Job Description or Topic to learn
                   </label>
                   <textarea
                     value={jobDescription}
                     onChange={(e) => setJobDescription(e.target.value)}
-                    placeholder="Paste the full job description here..."
-                    className="w-full h-64 p-4 rounded-lg bg-background border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none transition text-foreground placeholder:text-muted-foreground text-sm leading-relaxed"
+                    placeholder="Enter the full job description or topic here..."
+                    className="w-full h-48 p-4 rounded-lg bg-background border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none transition text-foreground placeholder:text-muted-foreground text-sm leading-relaxed"
                   />
                 </div>
 
@@ -106,24 +107,24 @@ const LearningResources = () => {
 
           {/* Output Section */}
           <div className="lg:col-span-2">
-            <div className="bg-card p-6 rounded-xl border border-border shadow-sm h-[calc(100vh-8rem)] flex flex-col">
-              <div className="flex items-center gap-3 mb-6 flex-shrink-0">
-                <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center">
-                  <BookOpen className="w-5 h-5 text-muted-foreground" />
+            <div className="bg-card rounded-xl border border-border shadow-sm h-[calc(100vh-8rem)] flex flex-col">
+              <div className="flex items-center gap-3 px-6 pt-6 pb-4 border-b border-border bg-muted/50 flex-shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-primary" />
                 </div>
                 <h2 className="text-lg font-semibold text-foreground">
-                  Learning Resources
+                  Generated Resources
                 </h2>
               </div>
 
-              <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+              <div className="flex-1 overflow-y-auto pr-2 pl-6 custom-scrollbar">
                 {resources.length === 0 ? (
                   <div className="h-full flex flex-col justify-center items-center text-center py-16 opacity-50">
                     <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4">
                       <BookOpen className="w-8 h-8 text-muted-foreground" />
                     </div>
                     <p className="text-muted-foreground max-w-xs">
-                      Paste a job description and click "Find Resources" to get
+                      Enter a job description and click "Find Resources" to get
                       curated learning materials for required skills.
                     </p>
                   </div>

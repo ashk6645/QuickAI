@@ -12,6 +12,9 @@ import {
   ExternalLink,
   CheckSquare,
   Square,
+  Map,
+  Clock,
+  Target,
 } from "lucide-react";
 
 /**
@@ -29,6 +32,7 @@ const ICON_MAP = {
   image: { icon: ImageIcon, bg: "bg-purple-500/10", text: "text-purple-600" },
   "job-opportunities": { icon: Briefcase, bg: "bg-blue-500/10", text: "text-blue-600" },
   "learning-resources": { icon: GraduationCap, bg: "bg-green-500/10", text: "text-green-600" },
+  "learning-roadmap": { icon: Map, bg: "bg-pink-500/10", text: "text-pink-600" },
   default: { icon: FileText, bg: "bg-blue-500/10", text: "text-blue-600" },
 };
 
@@ -65,6 +69,14 @@ const CreationItem = ({ item, onDelete, isSelected = false, onToggleSelect }) =>
         return Array.isArray(arr) ? arr.slice(0, MAX_LIST_ITEMS) : [];
       } catch {
         return [];
+      }
+    }
+
+    if (item.type === "learning-roadmap") {
+      try {
+        return JSON.parse(item.content);
+      } catch {
+        return null;
       }
     }
 
@@ -180,6 +192,88 @@ const CreationItem = ({ item, onDelete, isSelected = false, onToggleSelect }) =>
     );
   }, [parsedContent]);
 
+  const renderRoadmap = useCallback(() => {
+    const roadmap = parsedContent;
+    if (!roadmap || typeof roadmap !== "object") {
+      return <p className="text-sm text-muted-foreground">Invalid roadmap data</p>;
+    }
+
+    return (
+      <div className="space-y-4">
+        {/* Roadmap Header */}
+        <div className="space-y-2">
+          <h3 className="text-lg font-bold text-foreground">{roadmap.title}</h3>
+          <p className="text-sm text-muted-foreground">{roadmap.description}</p>
+          <div className="flex flex-wrap gap-2 mt-3">
+            {roadmap.totalDuration && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-500/10 text-blue-600 rounded-full text-xs font-medium">
+                <Clock className="w-3 h-3" />
+                {roadmap.totalDuration}
+              </span>
+            )}
+            {roadmap.difficulty && (
+              <span className="px-3 py-1 bg-purple-500/10 text-purple-600 rounded-full text-xs font-medium">
+                {roadmap.difficulty}
+              </span>
+            )}
+            {roadmap.phases && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-500/10 text-green-600 rounded-full text-xs font-medium">
+                <Target className="w-3 h-3" />
+                {roadmap.phases.length} Phases
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Phases Summary */}
+        {roadmap.phases && roadmap.phases.length > 0 && (
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold text-foreground">Learning Phases:</h4>
+            <div className="grid grid-cols-1 gap-3">
+              {roadmap.phases.slice(0, 5).map((phase, idx) => (
+                <div key={idx} className="p-3 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-start gap-3">
+                    <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold flex-shrink-0">
+                      {phase.phaseNumber || idx + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h5 className="font-semibold text-foreground text-sm">{phase.phaseName}</h5>
+                      <p className="text-xs text-muted-foreground mt-1">{phase.description}</p>
+                      {phase.duration && (
+                        <span className="inline-block mt-2 text-xs text-primary">
+                          {phase.duration}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {roadmap.phases.length > 5 && (
+              <p className="text-xs text-muted-foreground text-center">
+                + {roadmap.phases.length - 5} more phases
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Career Paths */}
+        {roadmap.careerPaths && roadmap.careerPaths.length > 0 && (
+          <div className="space-y-2">
+            <h4 className="text-sm font-semibold text-foreground">Career Paths:</h4>
+            <div className="flex flex-wrap gap-2">
+              {roadmap.careerPaths.slice(0, 4).map((path, idx) => (
+                <span key={idx} className="px-3 py-1 bg-blue-500/10 text-blue-600 rounded-full text-xs">
+                  {path}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }, [parsedContent]);
+
   const renderMarkdown = useCallback(() => {
     return (
       <div className="prose prose-sm max-w-none text-foreground prose-headings:text-foreground prose-p:text-muted-foreground prose-strong:text-foreground prose-code:text-primary">
@@ -198,8 +292,9 @@ const CreationItem = ({ item, onDelete, isSelected = false, onToggleSelect }) =>
     if (item.type === "image") return renderImage();
     if (item.type === "job-opportunities") return renderJobTitles();
     if (item.type === "learning-resources") return renderResources();
+    if (item.type === "learning-roadmap") return renderRoadmap();
     return renderMarkdown();
-  }, [item?.type, renderImage, renderJobTitles, renderResources, renderMarkdown]);
+  }, [item?.type, renderImage, renderJobTitles, renderResources, renderRoadmap, renderMarkdown]);
 
   return (
     <div className="group bg-card hover:bg-secondary/50 border-b border-border last:border-0 transition-colors">
