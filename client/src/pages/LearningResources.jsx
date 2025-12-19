@@ -129,11 +129,11 @@ const LearningResources = () => {
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-3 py-4">
                     {resources.map((resource, index) => (
                       <div
                         key={index}
-                        className="border border-border rounded-lg p-5 hover:border-primary/50 hover:shadow-md transition bg-card group"
+                        className="border border-border rounded-lg p-3 hover:border-primary/50 hover:shadow-md transition bg-card group"
                       >
                         <div className="flex items-start justify-between gap-4 mb-3">
                           <div>
@@ -146,7 +146,7 @@ const LearningResources = () => {
                           </div>
                         </div>
 
-                        <div className="flex flex-wrap gap-3 mt-4 pt-4 border-t border-border">
+                        <div className="flex flex-wrap gap-3 mt-2 pt-2 border-t border-border">
                           <a
                             href={resource.youtubeLink}
                             target="_blank"

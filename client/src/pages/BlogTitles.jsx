@@ -131,7 +131,7 @@ Example format:
                 {content && <ActionButtons content={content} type="text" filename={`blog-titles-${Date.now()}`} />}
               </div>
 
-              <div className='flex-1 overflow-y-auto pr-2 pl-6 custom-scrollbar'>
+              <div className='flex-1 overflow-y-auto pr-2 pl-6 py-4 custom-scrollbar'>
                 {!content ? (
                   <div className='h-full flex flex-col justify-center items-center text-center py-16 opacity-50'>
                     <div className='w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4'>

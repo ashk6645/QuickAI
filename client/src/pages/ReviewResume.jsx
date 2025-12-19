@@ -140,7 +140,7 @@ const ReviewResume = () => {
                 )}
               </div>
 
-              <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+              <div className="flex-1 overflow-y-auto pr-2 pl-6 py-4 custom-scrollbar">
                 {/* ATS Score Display */}
                 {atsScore !== null && (
                   <div className="mb-6 p-5 rounded-xl bg-secondary/20 border border-border">

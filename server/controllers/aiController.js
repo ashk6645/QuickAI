@@ -571,135 +571,239 @@ Return ONLY a JSON array.`;
 export const generateLearningRoadmap = async (req, res) => {
   try {
     const userId = ensureAuth(req);
-    const { input } = req.body;
+    const { input, experienceLevel = "beginner", timeCommitment = "moderate" } = req.body;
     const plan = req.plan ?? "free";
     const free_usage = Number(req.free_usage ?? 0);
 
     if (!input || typeof input !== "string" || input.trim().length < 3) {
-      return safeJson(res, 400, { success: false, message: "Please provide a job role or topic (minimum 3 characters)" });
+      return safeJson(res, 400, { 
+        success: false, 
+        message: "Please provide a job role or topic (minimum 3 characters)" 
+      });
     }
 
-    // Check usage limits
     if (!checkFreeUsageLimit(plan, free_usage)) {
-      return safeJson(res, 403, { success: false, message: "Free usage limit reached" });
+      return safeJson(res, 403, { 
+        success: false, 
+        message: "Free usage limit reached" 
+      });
     }
 
     const trimmedInput = input.trim().slice(0, 2000);
 
-    const prompt = `You are an expert teacher, career counselor and curriculum designer with deep expertise in creating structured learning paths. Create a comprehensive, well-organized learning roadmap for:
+    const prompt = `You are a world-class curriculum designer, career counselor, and learning expert. Create an exceptional, comprehensive learning roadmap for: "${trimmedInput}"
 
-"${trimmedInput}"
+USER CONTEXT:
+- Experience Level: ${experienceLevel}
+- Time Commitment: ${timeCommitment} (10-15 hrs/week for moderate)
 
-CRITICAL STRUCTURE GUIDELINES:
-1. ALWAYS start from absolute fundamentals - assume the learner is a complete beginner
-2. Build progressively - each phase should naturally lead to the next
-3. Cover ALL essential topics systematically - don't skip foundational concepts
-4. For technical subjects (like DSA, programming languages):
-   - Phase 1: Language fundamentals (syntax, data types, control flow, functions)
-   - Phase 2: Core concepts (OOP, error handling, basic algorithms)
-   - Phase 3: Main topic fundamentals (basic data structures like arrays, strings, linked lists)
-   - Phase 4: Advanced topics (trees, graphs, dynamic programming, system design)
-5. For non-technical subjects: Follow logical learning progression from basics to advanced
-6. Include practical applications and projects at each level
+CRITICAL QUALITY STANDARDS:
+1. DEPTH: Cover every essential concept systematically - no gaps in knowledge
+2. PROGRESSION: Perfect learning curve - each topic builds naturally on previous ones
+3. PRACTICAL: Every module must have hands-on projects that reinforce learning
+4. CURRENT: Use 2024-2025 resources, modern tools, and industry-standard practices
+5. SPECIFIC: Name exact courses, books, channels - no generic "learn from YouTube"
+6. MILESTONE-DRIVEN: Clear, measurable achievements at each phase
 
-EXAMPLE STRUCTURE for "DSA with Java":
-- Phase 1: Java Fundamentals (syntax, variables, loops, conditionals, functions, arrays, strings)
-- Phase 2: Object-Oriented Programming (classes, objects, inheritance, polymorphism, interfaces)
-- Phase 3: Linear Data Structures (arrays, linked lists, stacks, queues, hashmaps)
-- Phase 4: Non-Linear & Advanced DSA (trees, graphs, heaps, dynamic programming, recursion)
+STRUCTURAL REQUIREMENTS:
 
-JSON FORMAT INSTRUCTIONS:
-- Respond with ONLY valid JSON
-- Do NOT use markdown code blocks or backticks
-- Do NOT add any text before or after the JSON
-- Start your response with { and end with }
-- Keep it CONCISE - the entire response must fit within 6000 tokens
-- Ensure the JSON is complete and properly closed
+For TECHNICAL topics (Programming, DSA, DevOps, etc.):
+Phase 1: Environment & Fundamentals (1-2 weeks)
+  - Setup development environment
+  - Basic syntax, data types, variables
+  - Control structures (if/else, loops)
+  - Functions and basic problem-solving
+  
+Phase 2: Core Concepts (2-4 weeks)
+  - Object-oriented or functional paradigm basics
+  - Error handling and debugging
+  - Working with files and data
+  - Version control (Git)
+  
+Phase 3: Main Subject Deep Dive (4-8 weeks)
+  - Fundamental algorithms and patterns
+  - Core data structures with implementations
+  - Problem-solving strategies
+  - Time/space complexity analysis
+  
+Phase 4: Advanced Mastery (4-8 weeks)
+  - Advanced algorithms and optimization
+  - System design basics
+  - Real-world applications
+  - Interview preparation
 
-Generate a structured learning path with the following JSON format:
+For NON-TECHNICAL topics (Marketing, Design, Business):
+Phase 1: Foundations & Theory
+Phase 2: Core Skills & Tools
+Phase 3: Practical Application
+Phase 4: Advanced Strategy & Leadership
 
+RESOURCE QUALITY GUIDELINES:
+- Prioritize: Official documentation, top-rated Udemy/Coursera courses, renowned YouTube educators
+- For DSA: Include LeetCode, Algomaster.io, CodeSignal with specific problem sets
+- For Web Dev: Include MDN, freeCodeCamp, Frontend Mentor challenges
+- For Design: Include Figma, Dribbble, Behance case studies
+- Always specify: "Watch [Creator Name]'s [Specific Course/Playlist]" not just "YouTube tutorials"
+- IMPORTANT: Include REAL, working URLs for each resource (not placeholder-url). Generate actual URLs:
+  * YouTube videos: https://www.youtube.com/results?search_query=...
+  * Courses: Use actual course platform URLs or search URLs
+  * Documentation: Use official doc URLs (e.g., https://developer.mozilla.org/en-US/docs/...)
+  * Practice platforms: https://leetcode.com/, https://www.hackerrank.com/, etc.
+
+JSON FORMAT (respond with ONLY this JSON, no markdown):
 {
-  "title": "Clear, motivating title for the learning path",
-  "description": "2-3 sentence overview of what the learner will achieve",
-  "totalDuration": "Estimated total time (e.g., '3-6 months', '8-12 weeks')",
+  "title": "Compelling title",
+  "description": "2-3 sentence overview",
+  "totalDuration": "Realistic timeline",
   "difficulty": "Beginner|Intermediate|Advanced",
-  "prerequisites": ["prerequisite 1", "prerequisite 2"],
+  "prerequisites": ["prerequisite 1"] OR [],
   "phases": [
     {
       "phaseNumber": 1,
-      "phaseName": "Foundation/Core/Advanced etc.",
+      "phaseName": "Phase name",
       "duration": "2-4 weeks",
-      "description": "What this phase covers",
+      "description": "What this phase achieves",
       "modules": [
         {
-          "moduleName": "Specific topic/skill",
-          "duration": "3-5 days",
+          "moduleName": "Module name",
+          "duration": "5-7 days",
           "topics": ["topic 1", "topic 2", "topic 3"],
           "learningObjectives": ["objective 1", "objective 2"],
           "resources": [
             {
-              "type": "video|article|practice|book|course",
+              "type": "video|course|article|practice|book",
               "title": "Resource name",
-              "platform": "YouTube|Udemy|Coursera|FreeCodeCamp|etc",
-              "difficulty": "Beginner|Intermediate|Advanced"
+              "author": "Creator name",
+              "platform": "Platform",
+              "url": "https://actual-resource-url.com",
+              "duration": "2 hours",
+              "priority": "Essential|Recommended"
             }
           ],
-          "projects": ["hands-on project 1", "hands-on project 2"]
+          "practiceProblems": [
+            {
+              "title": "Practice set name",
+              "platform": "LeetCode|HackerRank",
+              "difficulty": "Easy|Medium",
+              "count": "5 problems"
+            }
+          ],
+          "projects": [
+            {
+              "name": "Project name",
+              "description": "Brief description",
+              "skills": ["skill 1", "skill 2"],
+              "estimatedTime": "4-6 hours"
+            }
+          ]
         }
       ],
-      "milestone": "Key achievement at end of this phase"
+      "capstoneProject": {
+        "name": "Phase project",
+        "description": "Project description",
+        "estimatedTime": "8-12 hours"
+      },
+      "milestone": "Achievement description"
     }
   ],
-  "careerPaths": ["Possible career path 1", "Possible career path 2"],
-  "nextSteps": ["What to do after completing this roadmap"]
+  "skillsAcquired": [
+    {
+      "category": "Technical Skills",
+      "skills": ["skill 1", "skill 2"]
+    }
+  ],
+  "careerPaths": [
+    {
+      "role": "Job title",
+      "description": "Brief description",
+      "salaryRange": "$XX,000 - $XX,000"
+    }
+  ],
+  "certifications": [
+    {
+      "name": "Certification",
+      "provider": "Organization",
+      "difficulty": "Beginner|Advanced"
+    }
+  ],
+  "nextSteps": ["Next step 1", "Next step 2"]
 }
 
-CONTENT REQUIREMENTS:
-- Create 4 phases with clear progression: Fundamentals → Core Concepts → Main Topics → Advanced
-- Each phase should have 2-3 modules (NOT more than 3)
-- Each module should have 2-3 resources (NOT more than 3)
-- Keep descriptions brief and concise
-- Include diverse resource types (videos, articles, practice platforms, books)
-- Make it actionable with specific projects and milestones
-- Mention real platforms/resources (YouTube channels, Coursera, Udemy, freeCodeCamp, LeetCode, HackerRank, etc.)
-- Include difficulty progression from beginner to advanced
-- Add career insights if it's job-related
-- Return ONLY valid JSON, no markdown formatting`;
+REQUIREMENTS:
+✓ Exactly 4 phases with clear progression
+✓ 2-3 modules per phase (MAX 3)
+✓ 2-3 resources per module (MAX 3) - prioritize quality over quantity
+✓ 1 project per module
+✓ 1 capstone per phase
+✓ Be concise - keep descriptions under 100 characters
+✓ Focus on essential content only
 
-    const llmResp = await callLLM({ prompt, temperature: 0.7, max_tokens: 6000 });
+IMPORTANT: Return ONLY valid JSON. Start with { and end with }. Keep response under 25,000 characters. NO markdown, NO backticks, NO extra text.`;
+
+    const llmResp = await callLLM({ 
+      prompt, 
+      temperature: 0.7, 
+      max_tokens: 5000 
+    });
 
     console.log("=== LLM Response Debug ===");
     console.log("Response length:", llmResp?.length);
-    console.log("First 200 chars:", llmResp?.substring(0, 200));
-    console.log("Last 200 chars:", llmResp?.substring(llmResp.length - 200));
+    console.log("First 300 chars:", llmResp?.substring(0, 300));
+    console.log("Last 300 chars:", llmResp?.substring(llmResp.length - 300));
     console.log("========================");
 
     let roadmap = null;
     try {
-      // Remove markdown code blocks if present
+      // Aggressive cleaning of markdown and extra text
       let cleanedResp = llmResp.trim();
       
-      // Remove all markdown code block markers
-      cleanedResp = cleanedResp.replace(/^```json\s*/gm, '').replace(/^```\s*/gm, '').replace(/\s*```$/gm, '');
+      // Remove all markdown code blocks
+      cleanedResp = cleanedResp.replace(/^```json\s*/gm, '');
+      cleanedResp = cleanedResp.replace(/^```\s*/gm, '');
+      cleanedResp = cleanedResp.replace(/\s*```$/gm, '');
+      cleanedResp = cleanedResp.replace(/```/g, '');
+      
+      // Find the JSON object bounds
+      const firstBrace = cleanedResp.indexOf('{');
+      const lastBrace = cleanedResp.lastIndexOf('}');
+      
+      if (firstBrace === -1 || lastBrace === -1) {
+        throw new Error("No valid JSON object found in response");
+      }
+      
+      cleanedResp = cleanedResp.substring(firstBrace, lastBrace + 1);
       cleanedResp = cleanedResp.trim();
       
       console.log("Cleaned response length:", cleanedResp.length);
-      console.log("First 200 chars of cleaned:", cleanedResp.substring(0, 200));
+      console.log("First 300 chars of cleaned:", cleanedResp.substring(0, 300));
       console.log("Last 200 chars of cleaned:", cleanedResp.substring(cleanedResp.length - 200));
       
-      // Parse the cleaned JSON
+      // Check if response looks truncated
+      if (cleanedResp.length > 30000) {
+        console.warn("Response may be truncated - length:", cleanedResp.length);
+      }
+      
       roadmap = JSON.parse(cleanedResp);
       
     } catch (parseErr) {
       console.error("Failed to parse roadmap JSON:", parseErr);
       console.error("Parse error message:", parseErr.message);
+      
+      // More helpful error message
+      let errorMsg = "Failed to generate structured roadmap. ";
+      if (parseErr.message.includes("position")) {
+        errorMsg += "The response was too large. Please try with a more specific topic or try again.";
+      } else {
+        errorMsg += "Please try again with a different topic.";
+      }
+      
       return safeJson(res, 500, { 
         success: false, 
-        message: "Failed to generate structured roadmap. Please try again." 
+        message: errorMsg
       });
     }
 
-    // Validate roadmap structure
+    // Enhanced validation
     if (!roadmap || !roadmap.phases || !Array.isArray(roadmap.phases)) {
       console.error("Invalid roadmap structure:", roadmap);
       return safeJson(res, 500, {
@@ -708,7 +812,18 @@ CONTENT REQUIREMENTS:
       });
     }
 
-    console.log("Roadmap generated successfully with", roadmap.phases.length, "phases");
+    // Validate phase structure
+    for (const phase of roadmap.phases) {
+      if (!phase.modules || !Array.isArray(phase.modules) || phase.modules.length === 0) {
+        console.error("Phase missing modules:", phase);
+        return safeJson(res, 500, {
+          success: false,
+          message: "Incomplete roadmap structure. Please try again."
+        });
+      }
+    }
+
+    console.log("✓ Roadmap generated successfully with", roadmap.phases.length, "phases");
 
     // Save to database
     if (userId) {
@@ -724,6 +839,7 @@ CONTENT REQUIREMENTS:
     if (plan !== "premium") incrementFreeUsage(userId, free_usage);
 
     return safeJson(res, 200, { success: true, roadmap });
+    
   } catch (err) {
     console.error("generateLearningRoadmap error:", err?.message || err);
     return safeJson(res, err?.status || 500, { 
@@ -732,3 +848,5 @@ CONTENT REQUIREMENTS:
     });
   }
 };
+
+

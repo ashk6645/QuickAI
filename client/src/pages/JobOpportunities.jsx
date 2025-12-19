@@ -184,7 +184,7 @@ const JobOpportunities = () => {
                 </h2>
               </div>
 
-              <div className="flex-1 overflow-y-auto pr-2 pl-6 custom-scrollbar">
+              <div className="flex-1 overflow-y-auto pr-2 pl-4 custom-scrollbar">
                 {jobTitles.length === 0 ? (
                   <div className="h-full flex flex-col justify-center items-center text-center py-16 opacity-50">
                     <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4">
@@ -196,7 +196,7 @@ const JobOpportunities = () => {
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-4 py-4">
                     {jobTitles.map((jobTitle, index) => {
                       const isSearching = searchingJob === jobTitle;
                       const searchData = searchResults[jobTitle];
