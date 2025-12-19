@@ -11,6 +11,7 @@ import {
 import axios from "axios";
 import { useAuth } from "@clerk/clerk-react";
 import toast from "react-hot-toast";
+import DataPipeline from "../components/DataPipeline";
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
 
@@ -18,6 +19,8 @@ const LearningResources = () => {
   const [jobDescription, setJobDescription] = useState("");
   const [loading, setLoading] = useState(false);
   const [resources, setResources] = useState([]);
+  const [isDataFlowing, setIsDataFlowing] = useState(false);
+  const [isReceiving, setIsReceiving] = useState(false);
   const { getToken } = useAuth();
 
   const handleSubmit = async (e) => {
@@ -29,6 +32,13 @@ const LearningResources = () => {
 
     setLoading(true);
     setResources([]);
+    setIsDataFlowing(true);
+    setIsReceiving(false);
+
+    // Simulate data reaching output section
+    setTimeout(() => {
+      setIsReceiving(true);
+    }, 1000);
 
     try {
       const { data } = await axios.post(
@@ -44,12 +54,21 @@ const LearningResources = () => {
       if (data.success) {
         setResources(data.resources);
         toast.success("Learning resources generated!");
+        // Stop animations after content is displayed
+        setTimeout(() => {
+          setIsDataFlowing(false);
+          setIsReceiving(false);
+        }, 500);
       } else {
         toast.error(data.message || "Failed to generate resources");
+        setIsDataFlowing(false);
+        setIsReceiving(false);
       }
     } catch (error) {
       console.error("Error generating resources:", error);
       toast.error(error.response?.data?.message || "Something went wrong");
+      setIsDataFlowing(false);
+      setIsReceiving(false);
     } finally {
       setLoading(false);
     }
@@ -61,7 +80,8 @@ const LearningResources = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Input Section */}
           <div className="lg:col-span-1">
-            <div className="bg-card rounded-xl border border-border shadow-sm sticky top-0">
+            <div className="bg-card rounded-xl border border-border shadow-sm sticky top-0 relative">
+              <DataPipeline isActive={isDataFlowing} isReceiving={isReceiving} />
               <div className="flex items-center gap-3 px-6 pt-6 pb-4 border-b border-border bg-muted/50">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                   <GraduationCap className="w-5 h-5 text-primary" />
@@ -107,7 +127,9 @@ const LearningResources = () => {
 
           {/* Output Section */}
           <div className="lg:col-span-2">
-            <div className="bg-card rounded-xl border border-border shadow-sm h-[calc(100vh-8rem)] flex flex-col">
+            <div className={`bg-card rounded-xl border h-[calc(100vh-8rem)] flex flex-col transition-all duration-500 ${
+              isReceiving ? 'border-primary/50 animate-receiving-pulse' : 'border-border shadow-sm'
+            }`}>
               <div className="flex items-center gap-3 px-6 pt-6 pb-4 border-b border-border bg-muted/50 flex-shrink-0">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                   <Sparkles className="w-5 h-5 text-primary" />

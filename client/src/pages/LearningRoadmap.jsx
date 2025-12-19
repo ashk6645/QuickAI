@@ -23,6 +23,7 @@ import {
 import axios from "axios";
 import { useAuth } from "@clerk/clerk-react";
 import toast from "react-hot-toast";
+import DataPipeline from "../components/DataPipeline";
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
 
@@ -30,6 +31,8 @@ const LearningRoadmap = () => {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [roadmap, setRoadmap] = useState(null);
+  const [isDataFlowing, setIsDataFlowing] = useState(false);
+  const [isReceiving, setIsReceiving] = useState(false);
   const { getToken } = useAuth();
 
   const handleSubmit = async (e) => {
@@ -41,6 +44,13 @@ const LearningRoadmap = () => {
 
     setLoading(true);
     setRoadmap(null);
+    setIsDataFlowing(true);
+    setIsReceiving(false);
+
+    // Simulate data reaching output section
+    setTimeout(() => {
+      setIsReceiving(true);
+    }, 1000);
 
     try {
       const { data } = await axios.post(
@@ -55,15 +65,24 @@ const LearningRoadmap = () => {
 
       if (data.success) {
         setRoadmap(data.roadmap);
-        toast.success("Learning roadmap generated!");
+        toast.success("Roadmap generated successfully!");
+        // Stop animations after content is displayed
+        setTimeout(() => {
+          setIsDataFlowing(false);
+          setIsReceiving(false);
+        }, 500);
       } else {
         console.error("Roadmap generation failed:", data);
         toast.error(data.message || "Failed to generate roadmap");
+        setIsDataFlowing(false);
+        setIsReceiving(false);
       }
     } catch (error) {
       console.error("Error generating roadmap:", error);
       console.error("Error response:", error.response?.data);
       toast.error(error.response?.data?.message || "Something went wrong");
+      setIsDataFlowing(false);
+      setIsReceiving(false);
     } finally {
       setLoading(false);
     }
@@ -92,7 +111,8 @@ const LearningRoadmap = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Input Section */}
           <div className="lg:col-span-1">
-            <div className="bg-card rounded-xl border border-border shadow-sm sticky top-0">
+            <div className="bg-card rounded-xl border border-border shadow-sm sticky top-0 relative">
+              <DataPipeline isActive={isDataFlowing} isReceiving={isReceiving} />
               <div className="flex items-center gap-3 px-6 pt-6 pb-4 border-b border-border bg-muted/50">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                   <Map className="w-5 h-5 text-primary" />
@@ -138,7 +158,9 @@ const LearningRoadmap = () => {
 
           {/* Output Section */}
           <div className="lg:col-span-2">
-            <div className="bg-card rounded-xl border border-border shadow-sm h-[calc(100vh-8rem)] flex flex-col">
+            <div className={`bg-card rounded-xl border h-[calc(100vh-8rem)] flex flex-col transition-all duration-500 ${
+              isReceiving ? 'border-primary/50 animate-receiving-pulse' : 'border-border shadow-sm'
+            }`}>
               <div className="flex items-center gap-3 px-6 pt-6 pb-4 border-b border-border bg-muted/50 flex-shrink-0">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                   <Sparkles className="w-5 h-5 text-primary" />
