@@ -17,7 +17,7 @@ const Testimonials = () => {
             rating: 5,
         },
         {
-            image: "https://static.wikia.nocookie.net/bakerstreet/images/7/78/Moriarty_Sherlock_Promotional.png/revision/latest?cb=20250316220701",
+            image: "https://rare-gallery.com/thumbs/1035392-painting-illustration-Gentleman-cartoon-brand-clothing-James-Moriarty-Sherlock.jpg",
             name: 'Jim Moriarty',
             title: 'Content Generator',
             content: 'QuickAI has transformed our content generation process. The AI tools have helped us produce high-quality content faster than ever before.',
