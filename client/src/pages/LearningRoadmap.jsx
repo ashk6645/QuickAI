@@ -18,6 +18,7 @@ import {
   DollarSign,
   PlayCircle,
   Sparkles,
+  ExternalLink,
 } from "lucide-react";
 import axios from "axios";
 import { useAuth } from "@clerk/clerk-react";
@@ -309,22 +310,106 @@ const LearningRoadmap = () => {
                                           Recommended Resources
                                         </p>
                                         <div className="space-y-2">
-                                          {module.resources.map((resource, resIdx) => (
+                                          {module.resources.map((resource, resIdx) => {
+                                            const hasUrl = resource.url && resource.url !== 'placeholder-url' && !resource.url.includes('placeholder');
+                                            const ResourceWrapper = hasUrl ? 'a' : 'div';
+                                            const wrapperProps = hasUrl ? {
+                                              href: resource.url,
+                                              target: "_blank",
+                                              rel: "noopener noreferrer",
+                                              className: "flex items-start gap-3 p-3 bg-muted/50 rounded-lg border border-border hover:border-primary hover:bg-primary/5 transition cursor-pointer group"
+                                            } : {
+                                              className: "flex items-start gap-3 p-3 bg-muted/50 rounded-lg border border-border transition"
+                                            };
+
+                                            return (
+                                              <ResourceWrapper key={resIdx} {...wrapperProps}>
+                                                <div className="w-8 h-8 rounded-lg bg-background flex items-center justify-center text-muted-foreground shadow-sm flex-shrink-0 mt-0.5">
+                                                  {getResourceIcon(resource.type)}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                  <div className="flex items-center gap-2">
+                                                    <p className="text-sm font-semibold text-foreground">
+                                                      {resource.title}
+                                                    </p>
+                                                    {hasUrl && (
+                                                      <ExternalLink className="w-3.5 h-3.5 text-primary opacity-0 group-hover:opacity-100 transition flex-shrink-0" />
+                                                    )}
+                                                  </div>
+                                                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                                    {resource.author && (
+                                                      <span className="text-xs text-muted-foreground">
+                                                        by {resource.author}
+                                                      </span>
+                                                    )}
+                                                    {resource.platform && (
+                                                      <span className="text-xs text-muted-foreground">
+                                                        • {resource.platform}
+                                                      </span>
+                                                    )}
+                                                    {resource.duration && (
+                                                      <span className="text-xs text-muted-foreground">
+                                                        • {resource.duration}
+                                                      </span>
+                                                    )}
+                                                    {resource.difficulty && (
+                                                      <span className="px-2 py-0.5 text-xs bg-primary/10 text-primary rounded-full font-medium">
+                                                        {resource.difficulty}
+                                                      </span>
+                                                    )}
+                                                    {resource.priority && resource.priority === "Essential" && (
+                                                      <span className="px-2 py-0.5 text-xs bg-red-500/10 text-red-600 rounded-full font-medium">
+                                                        Essential
+                                                      </span>
+                                                    )}
+                                                  </div>
+                                                </div>
+                                              </ResourceWrapper>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Practice Problems */}
+                                    {module.practiceProblems && module.practiceProblems.length > 0 && (
+                                      <div>
+                                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                                          <Target className="w-3.5 h-3.5" />
+                                          Practice Problems
+                                        </p>
+                                        <div className="space-y-2">
+                                          {module.practiceProblems.map((problem, probIdx) => (
                                             <div
-                                              key={resIdx}
-                                              className="flex items-center gap-3 p-2.5 bg-muted/50 rounded-lg border border-border hover:border-primary/20 transition"
+                                              key={probIdx}
+                                              className="flex items-center justify-between p-2.5 bg-blue-500/5 rounded-lg border border-blue-500/10"
                                             >
-                                              <div className="w-8 h-8 rounded-lg bg-background flex items-center justify-center text-muted-foreground shadow-sm">
-                                                {getResourceIcon(resource.type)}
+                                              <div className="flex items-center gap-2">
+                                                <Code className="w-4 h-4 text-blue-600" />
+                                                <span className="text-sm font-medium text-foreground">
+                                                  {typeof problem === 'string' ? problem : problem.title}
+                                                </span>
                                               </div>
-                                              <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-semibold text-foreground truncate">
-                                                  {resource.title}
-                                                </p>
-                                                <p className="text-xs text-muted-foreground">
-                                                  {resource.platform}
-                                                </p>
-                                              </div>
+                                              {typeof problem === 'object' && (
+                                                <div className="flex items-center gap-2">
+                                                  {problem.platform && (
+                                                    <span className="text-xs text-muted-foreground">
+                                                      {problem.platform}
+                                                    </span>
+                                                  )}
+                                                  {problem.difficulty && (
+                                                    <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${
+                                                      problem.difficulty === 'Easy' 
+                                                        ? 'bg-green-500/10 text-green-600'
+                                                        : problem.difficulty === 'Medium'
+                                                        ? 'bg-amber-500/10 text-amber-600'
+                                                        : 'bg-red-500/10 text-red-600'
+                                                    }`}>
+                                                      {problem.difficulty}
+                                                    </span>
+                                                  )}
+                                                </div>
+                                              )}
                                             </div>
                                           ))}
                                         </div>
@@ -338,23 +423,96 @@ const LearningRoadmap = () => {
                                           <Code className="w-3.5 h-3.5" />
                                           Practice Projects
                                         </p>
-                                        <ul className="space-y-2">
-                                          {module.projects.map((project, projIdx) => (
-                                            <li
-                                              key={projIdx}
-                                              className="flex items-start gap-2 text-sm text-foreground p-2 bg-purple-500/5 rounded-lg border border-purple-500/10"
-                                            >
-                                              <PlayCircle className="w-4 h-4 text-purple-600 flex-shrink-0 mt-0.5" />
-                                              <span className="font-medium">{project}</span>
-                                            </li>
-                                          ))}
-                                        </ul>
+                                        <div className="space-y-3">
+                                          {module.projects.map((project, projIdx) => {
+                                            // Handle both string and object formats
+                                            const isObject = typeof project === 'object' && project !== null;
+                                            const projectName = isObject ? project.name : project;
+                                            const projectDesc = isObject ? project.description : null;
+                                            const projectSkills = isObject ? project.skills : null;
+                                            const projectTime = isObject ? project.estimatedTime : null;
+
+                                            return (
+                                              <div
+                                                key={projIdx}
+                                                className="p-3 bg-purple-500/5 rounded-lg border border-purple-500/10"
+                                              >
+                                                <div className="flex items-start gap-2 mb-2">
+                                                  <PlayCircle className="w-4 h-4 text-purple-600 flex-shrink-0 mt-0.5" />
+                                                  <span className="text-sm font-semibold text-foreground">
+                                                    {projectName}
+                                                  </span>
+                                                </div>
+                                                {projectDesc && (
+                                                  <p className="text-xs text-muted-foreground mb-2 ml-6">
+                                                    {projectDesc}
+                                                  </p>
+                                                )}
+                                                {projectSkills && projectSkills.length > 0 && (
+                                                  <div className="flex flex-wrap gap-1.5 ml-6 mb-2">
+                                                    {projectSkills.map((skill, skillIdx) => (
+                                                      <span
+                                                        key={skillIdx}
+                                                        className="px-2 py-0.5 bg-purple-600/10 text-purple-600 rounded text-xs font-medium"
+                                                      >
+                                                        {skill}
+                                                      </span>
+                                                    ))}
+                                                  </div>
+                                                )}
+                                                {projectTime && (
+                                                  <div className="flex items-center gap-1.5 ml-6">
+                                                    <Clock className="w-3 h-3 text-muted-foreground" />
+                                                    <span className="text-xs text-muted-foreground">
+                                                      {projectTime}
+                                                    </span>
+                                                  </div>
+                                                )}
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
                                       </div>
                                     )}
                                   </div>
                                 </div>
                               ))}
                             </div>
+
+                            {/* Capstone Project */}
+                            {phase.capstoneProject && (
+                              <div className="p-5 bg-indigo-500/5 border-t-2 border-indigo-500/20">
+                                <div className="flex items-start gap-3">
+                                  <Award className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
+                                  <div className="flex-1">
+                                    <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wide mb-1">
+                                      Phase Capstone Project
+                                    </p>
+                                    <p className="text-base font-bold text-foreground mb-2">
+                                      {phase.capstoneProject.name}
+                                    </p>
+                                    {phase.capstoneProject.description && (
+                                      <p className="text-sm text-muted-foreground mb-2">
+                                        {phase.capstoneProject.description}
+                                      </p>
+                                    )}
+                                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                      {phase.capstoneProject.estimatedTime && (
+                                        <span className="flex items-center gap-1">
+                                          <Clock className="w-3 h-3" />
+                                          {phase.capstoneProject.estimatedTime}
+                                        </span>
+                                      )}
+                                      {phase.capstoneProject.deliverable && (
+                                        <span>
+                                          Deliverable: {phase.capstoneProject.deliverable}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
 
                             {/* Phase Milestone */}
                             {phase.milestone && (
@@ -377,6 +535,35 @@ const LearningRoadmap = () => {
                       ))}
                     </div>
 
+                    {/* Skills Acquired */}
+                    {roadmap.skillsAcquired && roadmap.skillsAcquired.length > 0 && (
+                      <div className="p-5 bg-primary/5 rounded-xl border-2 border-primary/10">
+                        <div className="flex items-center gap-2 mb-4">
+                          <Award className="w-5 h-5 text-primary" />
+                          <h3 className="font-bold text-foreground">Skills You'll Acquire</h3>
+                        </div>
+                        <div className="space-y-3">
+                          {roadmap.skillsAcquired.map((skillCategory, idx) => (
+                            <div key={idx}>
+                              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                                {skillCategory.category}
+                              </p>
+                              <div className="flex flex-wrap gap-2">
+                                {skillCategory.skills && skillCategory.skills.map((skill, skillIdx) => (
+                                  <span
+                                    key={skillIdx}
+                                    className="px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-xs font-medium border border-primary/20"
+                                  >
+                                    {skill}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Career Paths */}
                     {roadmap.careerPaths && roadmap.careerPaths.length > 0 && (
                       <div className="p-5 bg-indigo-500/5 rounded-xl border-2 border-indigo-500/10">
@@ -384,14 +571,85 @@ const LearningRoadmap = () => {
                           <Briefcase className="w-5 h-5 text-indigo-600" />
                           <h3 className="font-bold text-foreground">Career Opportunities</h3>
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                          {roadmap.careerPaths.map((path, idx) => (
-                            <span
+                        <div className="space-y-3">
+                          {roadmap.careerPaths.map((path, idx) => {
+                            // Handle both string and object formats
+                            const isObject = typeof path === 'object' && path !== null;
+                            const roleName = isObject ? path.role : path;
+                            
+                            return isObject ? (
+                              <div
+                                key={idx}
+                                className="p-4 bg-background rounded-lg border border-border shadow-sm"
+                              >
+                                <div className="flex items-start justify-between mb-2">
+                                  <h4 className="text-sm font-bold text-foreground">{path.role}</h4>
+                                  {path.salaryRange && (
+                                    <div className="flex items-center gap-1 text-green-600">
+                                      <DollarSign className="w-4 h-4" />
+                                      <span className="text-xs font-semibold">{path.salaryRange}</span>
+                                    </div>
+                                  )}
+                                </div>
+                                {path.description && (
+                                  <p className="text-xs text-muted-foreground mb-2">{path.description}</p>
+                                )}
+                                {path.demandLevel && (
+                                  <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${
+                                    path.demandLevel === 'High'
+                                      ? 'bg-green-500/10 text-green-600'
+                                      : path.demandLevel === 'Medium'
+                                      ? 'bg-amber-500/10 text-amber-600'
+                                      : 'bg-gray-500/10 text-gray-600'
+                                  }`}>
+                                    <TrendingUp className="w-3 h-3" />
+                                    {path.demandLevel} Demand
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <span
+                                key={idx}
+                                className="inline-block px-4 py-2 bg-background text-foreground rounded-lg text-sm font-semibold border border-border shadow-sm"
+                              >
+                                {roleName}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Certifications */}
+                    {roadmap.certifications && roadmap.certifications.length > 0 && (
+                      <div className="p-5 bg-amber-500/5 rounded-xl border-2 border-amber-500/10">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Award className="w-5 h-5 text-amber-600" />
+                          <h3 className="font-bold text-foreground">Recommended Certifications</h3>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {roadmap.certifications.map((cert, idx) => (
+                            <div
                               key={idx}
-                              className="px-4 py-2 bg-background text-foreground rounded-lg text-sm font-semibold border border-border shadow-sm"
+                              className="p-3 bg-background rounded-lg border border-border"
                             >
-                              {path}
-                            </span>
+                              <p className="text-sm font-semibold text-foreground mb-1">
+                                {cert.name}
+                              </p>
+                              <p className="text-xs text-muted-foreground mb-2">
+                                {cert.provider}
+                              </p>
+                              {cert.value && (
+                                <p className="text-xs text-muted-foreground mb-2">
+                                  {cert.value}
+                                </p>
+                              )}
+                              {cert.difficulty && (
+                                <span className="inline-block px-2 py-0.5 bg-amber-600/10 text-amber-600 rounded-full text-xs font-medium">
+                                  {cert.difficulty}
+                                </span>
+                              )}
+                            </div>
                           ))}
                         </div>
                       </div>
