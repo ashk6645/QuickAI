@@ -3,7 +3,7 @@ import { Star } from "lucide-react";
 const Testimonials = () => {
     const dummyTestimonialData = [
         {
-            image: "https://ashk.vercel.app/assets/Profile%20image-BbMLCBS4.jpeg",
+            image: "https://ashk.vercel.app/images/Profile%20image.jpeg",
             name: 'Ashutosh Singh',
             title: 'Content Creator',
             content: 'QuickAI has revolutionized our content workflow. The quality of the articles is outstanding, and it saves us hours of work every week.',
