@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { ActionButtons } from "../components/ActionButtons";
+import DataPipeline from "../components/DataPipeline";
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
 
@@ -20,6 +21,8 @@ const WriteArticle = () => {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [content, setContent] = useState("");
+  const [isDataFlowing, setIsDataFlowing] = useState(false);
+  const [isReceiving, setIsReceiving] = useState(false);
 
   const { getToken } = useAuth();
 
@@ -27,6 +30,9 @@ const WriteArticle = () => {
     e.preventDefault();
     try {
       setLoading(true);
+      setIsDataFlowing(true);
+      setIsReceiving(false);
+      setContent('');
       const prompt = `Write a well-structured, professional article about "${input}".
 
 Requirements:
@@ -40,6 +46,12 @@ Requirements:
 - Make it SEO-friendly and easy to read
 
 Format the article in clean markdown with proper spacing.`;
+      
+      // Simulate data reaching output section
+      setTimeout(() => {
+        setIsReceiving(true);
+      }, 1000);
+
       const { data } = await axios.post(
         "/api/ai/generate-article",
         {
@@ -67,11 +79,20 @@ Format the article in clean markdown with proper spacing.`;
         }
         console.log("Cleaned content:", cleanContent);
         setContent(cleanContent);
+        // Stop animations after content is displayed
+        setTimeout(() => {
+          setIsDataFlowing(false);
+          setIsReceiving(false);
+        }, 500);
       } else {
         toast.error(data.message);
+        setIsDataFlowing(false);
+        setIsReceiving(false);
       }
     } catch (error) {
       toast.error(error.message);
+      setIsDataFlowing(false);
+      setIsReceiving(false);
     }
     setLoading(false);
   };
@@ -82,7 +103,8 @@ Format the article in clean markdown with proper spacing.`;
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Upload Section */}
           <div className="lg:col-span-1">
-            <div className="bg-card rounded-xl border border-border shadow-sm sticky top-0">
+            <div className="bg-card rounded-xl border border-border shadow-sm sticky top-0 relative">
+              <DataPipeline isActive={isDataFlowing} isReceiving={isReceiving} />
               <div className="flex items-center gap-3 px-6 pt-6 pb-4 border-b border-border bg-muted/50">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                   <Edit className="w-5 h-5 text-primary" />
@@ -148,8 +170,10 @@ Format the article in clean markdown with proper spacing.`;
           </div>
 
           {/* Output Section */}
-          <div className="lg:col-span-2">
-            <div className="bg-card rounded-xl border border-border shadow-sm h-[calc(100vh-8rem)] flex flex-col">
+          <div className="lg:col-span-2 relative">
+            <div className={`bg-card rounded-xl border h-[calc(100vh-8rem)] flex flex-col transition-all duration-500 ${
+              isReceiving ? 'border-primary/50 animate-receiving-pulse' : 'border-border shadow-sm'
+            }`}>
               <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-border bg-muted/50 flex-shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
