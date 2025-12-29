@@ -17,8 +17,8 @@ const Testimonials = () => {
             rating: 5,
         },
         {
-            image: "https://rare-gallery.com/thumbs/1035392-painting-illustration-Gentleman-cartoon-brand-clothing-James-Moriarty-Sherlock.jpg",
-            name: 'Jim Moriarty',
+            image: "https://www.syfy.com/sites/syfy/files/styles/scale_600/public/kingpin_video_games.jpg",
+            name: 'Kingpin',
             title: 'Content Generator',
             content: 'QuickAI has transformed our content generation process. The AI tools have helped us produce high-quality content faster than ever before.',
             rating: 4,
